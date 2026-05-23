@@ -23,7 +23,7 @@ export async function planRetrieval(request: ChatRequest, intent: ChatIntent): P
       textChunks: [],
       structureIndex: indexDoc.exists ? indexDoc.data() : null
     };
-  } else {
+    } else {
     // We can start hybrid search while chapter verification runs
     // Note: chapter validation failure should reject immediately, it's small overhead if parallelized
     const [chapterDoc, results] = await Promise.all([
@@ -35,9 +35,14 @@ export async function planRetrieval(request: ChatRequest, intent: ChatIntent): P
       throw new Error("Chapter is not published yet.");
     }
 
+    const textChunks = results.map((r: any) => r.metadata);
+    if ((results as any).isCacheHit) {
+       (textChunks as any).isCacheHit = true;
+    }
+
     return {
       intent,
-      textChunks: results.map((r: any) => r.metadata),
+      textChunks,
     };
   }
 }

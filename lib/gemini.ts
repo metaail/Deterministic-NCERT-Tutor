@@ -13,6 +13,35 @@ export const CHAT_MODEL = 'gemini-3.5-flash';
 export const FALLBACK_MODEL = 'gemini-3.5-flash';
 export const EMBEDDING_MODEL = 'gemini-embedding-2-preview';
 
+  export async function generateContentStream(prompt: string, systemInstruction?: string, retries = 2) {
+    const ai = getAiClient();
+    if (!ai) throw new Error("GEMINI_API_KEY not configured.");
+    
+    let lastError = null;
+    for (let i = 0; i < retries; i++) {
+        try {
+            const responseStream = await ai.models.generateContentStream({
+                model: CHAT_MODEL,
+                contents: prompt,
+                config: {
+                    systemInstruction: systemInstruction,
+                }
+            });
+            return responseStream;
+        } catch (err: any) {
+            const errMsg = err.message || JSON.stringify(err);
+            if (err.status === 429 || err.status === 'RESOURCE_EXHAUSTED' || errMsg.includes('429') || errMsg.includes('Quota exceeded')) {
+                console.warn(`[Rate Limit] Retrying stream in 2 seconds...`);
+                await new Promise(res => setTimeout(res, 2000));
+                lastError = err;
+                continue;
+            }
+            throw err;
+        }
+    }
+    throw lastError;
+  }
+
   export async function generateContent(prompt: string, systemInstruction?: string, retries = 2): Promise<string> {
     const ai = getAiClient();
     if (!ai) throw new Error("GEMINI_API_KEY not configured.");

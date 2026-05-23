@@ -97,7 +97,7 @@ export default function StudentChatPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -109,15 +109,53 @@ export default function StudentChatPage() {
         })
       });
 
-      const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to fetch response');
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to fetch response');
       }
 
-      setMessages(prev => [...prev, data.message as ChatMessage]);
+      setIsLoading(false);
+      let incomingMsg: ChatMessage = { role: 'model', content: '' };
+      setMessages(prev => [...prev, incomingMsg]);
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder('utf-8');
+
+      if (reader) {
+        let buffer = '';
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split('\n\n');
+          // Keep the last part as buffer as it might be incomplete
+          buffer = parts.pop() || '';
+
+          for (const part of parts) {
+            if (part.startsWith('data: ')) {
+              try {
+                const dataObj = JSON.parse(part.slice(6));
+                if (dataObj.error) {
+                  throw new Error(dataObj.error);
+                }
+                if (dataObj.content) {
+                  incomingMsg.content += dataObj.content;
+                  setMessages(prev => {
+                    const newArr = [...prev];
+                    newArr[newArr.length - 1] = { ...incomingMsg };
+                    return newArr;
+                  });
+                }
+              } catch(e) {
+                console.warn('JSON parse error from stream chunk', e);
+              }
+            }
+          }
+        }
+      }
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setIsLoading(false);
     }
   };
