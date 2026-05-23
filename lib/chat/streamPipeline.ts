@@ -44,6 +44,8 @@ export async function runTutorAgentStream(
         let initialBuffer = '';
         let initialChunkCount = 0;
 
+        controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ metadata: { textChunks: payload.textChunks, intent: payload.intent } })}\n\n`));
+
         for await (const chunk of stream) {
           const text = chunk.text;
           if (!text) continue;
@@ -109,7 +111,7 @@ export async function runTutorAgentStream(
         
         // Append pyqs
         const finalPyqs = "\n\n---\n\n" + safePyqText;
-        controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: finalPyqs })}\n\n`));
+        controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: finalPyqs, metadata: { pyqs } })}\n\n`));
         fullResponse += finalPyqs;
 
         const endTime = Date.now();

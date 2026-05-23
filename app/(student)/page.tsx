@@ -1,59 +1,49 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { MarkdownRenderer } from '@/components/MarkdownRenderer';
-import { ChatMessage } from '@/lib/chat/chatTypes';
-import { motion } from 'motion/react';
-
-const ThinkingAnimation = () => (
-  <div className="flex gap-1 items-center justify-center p-2">
-    {[0, 1, 2].map((i) => (
-      <motion.div
-        key={i}
-        className="w-2 h-2 bg-gray-400 rounded-full"
-        animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-        transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }}
-      />
-    ))}
-  </div>
-);
+import { useState, useEffect } from 'react';
+import { useStreamingChat } from '@/lib/chat/useStreamingChat';
+import { useConversationMemory } from '@/lib/chat/useConversationMemory';
+import { useReferences } from '@/lib/chat/useReferences';
+import { ChatWindow } from './components/ChatWindow';
+import { ReferenceSidebar } from './components/ReferenceSidebar';
+import { SubjectSwitcher } from './components/SubjectSwitcher';
+import { ChapterNavigator } from './components/ChapterNavigator';
+import { PerformanceBadge } from './components/PerformanceBadge';
+import { MobileDrawer } from './components/MobileDrawer';
 import { getPublishedChapters } from '@/lib/chat/getPublishedChapters';
+import { Send, Menu, PanelRightClose, PanelRightOpen, Trash2, LibraryBig } from 'lucide-react';
 
-// Assuming basic defaults for demo. In a real app, these would come from the database/dropdown.
 export default function StudentChatPage() {
-  const [subjectCode, setSubjectCode] = useState('041'); // Math preferred now
+  const [subjectCode, setSubjectCode] = useState('041');
   const [classLevel, setClassLevel] = useState('Class 11');
   const [chapterKey, setChapterKey] = useState('');
-  
   const [query, setQuery] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   
   const [availableChapters, setAvailableChapters] = useState<any[]>([]);
   const [loadingChapters, setLoadingChapters] = useState(true);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { memoryMessages, updateMessages, clearMemory } = useConversationMemory();
+  const { messages, setMessages, sendMessage, isLoading, error } = useStreamingChat();
+  const { isOpen, setIsOpen, hasReferences, metadata } = useReferences(messages);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    const scrollContent = containerRef.current.querySelector('#scroll-content');
-    if (!scrollContent) return;
-    const observer = new ResizeObserver(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    });
-    observer.observe(scrollContent);
-    return () => observer.disconnect();
-  }, [messages, isLoading]);
+    if (memoryMessages && messages.length === 0 && !isLoading) {
+      setMessages(memoryMessages);
+    }
+  }, [memoryMessages, messages.length, isLoading, setMessages]);
 
+  useEffect(() => {
+    if (messages.length > 0) {
+      updateMessages(messages);
+    }
+  }, [messages, updateMessages]);
 
   useEffect(() => {
     async function load() {
       try {
         const chapters = await getPublishedChapters();
         setAvailableChapters(chapters);
-        // set default chapter if available
         const filtered = chapters.filter(c => 
           (c.subjectCode === subjectCode || (subjectCode === '041' && c.subject === 'Maths')) &&
           c.classLevel === classLevel
@@ -70,7 +60,6 @@ export default function StudentChatPage() {
     load();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update chapterKey when subject/class changes
   useEffect(() => {
     const filtered = availableChapters.filter(c => 
       (c.subjectCode === subjectCode || (subjectCode === '041' && c.subject === 'Maths')) &&
@@ -82,82 +71,32 @@ export default function StudentChatPage() {
         setChapterKey(filtered[0].id);
       }
     } else {
-       
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setChapterKey('');
     }
   }, [subjectCode, classLevel, availableChapters]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSend = async () => {
+  const handleSend = () => {
     if (!query.trim() || !chapterKey) return;
-    
-    const userMsg: ChatMessage = { role: 'user', content: query };
-    setMessages(prev => [...prev, userMsg]);
+    const currentQuery = query;
     setQuery('');
-    setError('');
-    setIsLoading(true);
-
-    try {
-      const res = await fetch('/api/chat/stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subjectCode,
-          classLevel,
-          chapterKey,
-          query: userMsg.content,
-          history: messages.slice(-5) // Send last 5 msgs
-        })
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to fetch response');
-      }
-
-      setIsLoading(false);
-      let incomingMsg: ChatMessage = { role: 'model', content: '' };
-      setMessages(prev => [...prev, incomingMsg]);
-
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder('utf-8');
-
-      if (reader) {
-        let buffer = '';
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const parts = buffer.split('\n\n');
-          // Keep the last part as buffer as it might be incomplete
-          buffer = parts.pop() || '';
-
-          for (const part of parts) {
-            if (part.startsWith('data: ')) {
-              try {
-                const dataObj = JSON.parse(part.slice(6));
-                if (dataObj.error) {
-                  throw new Error(dataObj.error);
-                }
-                if (dataObj.content) {
-                  incomingMsg.content += dataObj.content;
-                  setMessages(prev => {
-                    const newArr = [...prev];
-                    newArr[newArr.length - 1] = { ...incomingMsg };
-                    return newArr;
-                  });
-                }
-              } catch(e) {
-                console.warn('JSON parse error from stream chunk', e);
-              }
-            }
-          }
-        }
-      }
-    } catch (err: any) {
-      setError(err.message);
-      setIsLoading(false);
+    sendMessage(currentQuery, subjectCode, classLevel, chapterKey, messages);
+    if (!isOpen && hasReferences) {
+        setIsOpen(true);
     }
+  };
+
+  const handleSuggestionSelect = (suggestion: string) => {
+    if (!chapterKey) return;
+    sendMessage(suggestion, subjectCode, classLevel, chapterKey, messages);
+    if (!isOpen && hasReferences) {
+        setIsOpen(true);
+    }
+  };
+
+  const handleClear = () => {
+     clearMemory();
+     setMessages([]);
   };
 
   const filteredChapters = availableChapters.filter(c => 
@@ -166,97 +105,113 @@ export default function StudentChatPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center">
-      <div className="w-full max-w-4xl bg-white border-x border-b border-gray-200 shadow-sm min-h-screen flex flex-col">
+    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
+      <div className="flex-1 flex flex-col h-full bg-white relative">
         {/* Header */}
-        <div className="p-4 border-b border-gray-100 bg-white">
-          <h1 className="text-xl font-bold text-gray-800">Deterministic NCERT Tutor</h1>
-          <p className="text-xs text-gray-500 mb-4">Phase 4 Chat RAG</p>
-          <div className="flex gap-2 text-sm">
-            <select className="border border-gray-200 rounded p-1" value={subjectCode} onChange={e => setSubjectCode(e.target.value)} suppressHydrationWarning>
-              <option value="042">Physics</option>
-              <option value="043">Chemistry</option>
-              <option value="044">Biology</option>
-              <option value="041">Mathematics</option>
-            </select>
-            <select className="border border-gray-200 rounded p-1" value={classLevel} onChange={e => setClassLevel(e.target.value)} suppressHydrationWarning>
-              <option value="Class 11">Class 11</option>
-              <option value="Class 12">Class 12</option>
-            </select>
-            
-            {loadingChapters ? (
-               <span className="p-1 text-gray-400">Loading chapters...</span>
-            ) : (
-              <select 
-                className="border border-gray-200 rounded p-1"
-                value={chapterKey}
-                onChange={e => setChapterKey(e.target.value)}
+         <header className="h-14 border-b border-gray-200 bg-white/80 backdrop-blur-md px-4 flex items-center justify-between shrink-0 z-10">
+          <div className="flex items-center gap-2 sm:gap-3 w-full max-w-7xl mx-auto">
+             <div className="hidden sm:block text-lg font-bold text-gray-900 mr-2">NEET/JEE Tutor</div>
+             <SubjectSwitcher subjectCode={subjectCode} onChange={setSubjectCode} />
+             <select 
+                className="bg-gray-100/50 hover:bg-gray-100 border border-gray-200 text-sm font-medium text-gray-700 py-1.5 px-2 sm:px-3 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none cursor-pointer"
+                value={classLevel} 
+                onChange={e => setClassLevel(e.target.value)} 
+                suppressHydrationWarning
               >
-                {filteredChapters.length === 0 && <option value="">No chapters available</option>}
-                {filteredChapters.map(c => (
-                  <option key={c.id} value={c.id}>{c.chapterTitle || c.id}</option>
-                ))}
+                <option value="Class 11">Class 11</option>
+                <option value="Class 12">Class 12</option>
               </select>
-            )}
-          </div>
-        </div>
+             <ChapterNavigator 
+               chapters={filteredChapters} 
+               chapterKey={chapterKey} 
+               onChange={setChapterKey} 
+               isLoading={loadingChapters} 
+             />
+             
+             {hasReferences && <PerformanceBadge score={0.9} timeMs={120} />}
 
-        {/* Chat Area */}
-        <div ref={containerRef} className="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col gap-4">
-          <div className="flex-1 flex flex-col gap-4" id="scroll-content">
-          {messages.length === 0 && (
-            <div className="text-center text-gray-400 mt-10">
-              <p>Type a question to begin.</p>
-            </div>
-          )}
-          {messages.map((m, idx) => (
-            <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] rounded-xl p-4 ${m.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 shadow-sm'}`}>
-                {m.role === 'user' ? (
-                  <p className="whitespace-pre-wrap text-sm">{m.content}</p>
-                ) : (
-                  <MarkdownRenderer content={m.content} />
-                )}
-              </div>
-            </div>
-          ))}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 text-gray-400 text-sm">
-                <ThinkingAnimation />
-              </div>
-            </div>
-          )}
-          {error && (
-            <div className="flex justify-center">
-               <div className="bg-red-50 text-red-600 border border-red-200 rounded-lg p-2 flex text-xs items-center max-w-sm">
-                  {error}
+             <div className="flex-1" />
+
+             {messages.length > 0 && (
+                <button onClick={handleClear} className="p-2 text-gray-400 hover:text-red-500 transition-colors" title="Clear Chat">
+                  <Trash2 size={18} />
+                </button>
+             )}
+
+             <button 
+               onClick={() => setIsOpen(!isOpen)}
+               className={`p-2 rounded-md transition-colors hidden lg:flex ${isOpen ? 'bg-indigo-50 text-indigo-600' : 'text-gray-500 hover:bg-gray-100'}`}
+               title="Toggle References"
+             >
+               {isOpen ? <PanelRightClose size={20} /> : <PanelRightOpen size={20} />}
+             </button>
+             
+             {/* Mobile Reference Trigger */}
+             {hasReferences && (
+               <button 
+                 onClick={() => setIsMobileDrawerOpen(true)}
+                 className="p-2 rounded-md text-indigo-600 bg-indigo-50 lg:hidden flex transition-colors"
+               >
+                 <LibraryBig size={20} />
+               </button>
+             )}
+          </div>
+        </header>
+
+        {/* Main Workspace */}
+        <div className="flex-1 flex overflow-hidden">
+          <main className="flex-1 flex flex-col min-w-0">
+             <ChatWindow 
+               messages={messages} 
+               isLoading={isLoading} 
+               error={error} 
+               onSuggestionSelect={handleSuggestionSelect}
+             />
+             
+             {/* Sticky Input Area */}
+             <div className="p-4 bg-gradient-to-t from-gray-50 via-gray-50/80 to-transparent pb-6 shrink-0">
+               <div className="max-w-3xl mx-auto relative rounded-2xl shadow-sm border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-400 transition-all">
+                 <textarea 
+                   className="w-full bg-transparent px-4 py-4 pr-14 text-sm text-gray-800 focus:outline-none resize-none max-h-40 min-h-[56px]"
+                   placeholder="Ask about formulas, concepts, or PYQs..."
+                   value={query}
+                   onChange={(e) => {
+                     setQuery(e.target.value);
+                     e.target.style.height = 'auto';
+                     e.target.style.height = e.target.scrollHeight + 'px';
+                   }}
+                   rows={1}
+                   onKeyDown={e => {
+                     if (e.key === 'Enter' && !e.shiftKey) {
+                       e.preventDefault();
+                       handleSend();
+                     }
+                   }}
+                   disabled={isLoading}
+                   suppressHydrationWarning
+                 />
+                 <button 
+                   className={`absolute right-2 bottom-2 p-2 rounded-xl transition-all ${
+                     isLoading || !query.trim() 
+                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                     : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
+                   }`}
+                   disabled={isLoading || !query.trim()}
+                   onClick={handleSend}
+                 >
+                   <Send size={16} />
+                 </button>
                </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        {/* Input Area */}
-        <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-2">
-          <input 
-            type="text" 
-            className="flex-1 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Ask a question about the chapter..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSend()}
-            disabled={isLoading}
-            suppressHydrationWarning
-          />
-          <button 
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-            disabled={isLoading || !query.trim()}
-            onClick={handleSend}
-          >
-            Send
-          </button>
+               <div className="text-center mt-2">
+                 <span className="text-[11px] text-gray-400">AI can make mistakes. Verify critical concepts with NCERT.</span>
+               </div>
+             </div>
+          </main>
+          
+          {/* Reference Sidebar */}
+          <ReferenceSidebar isOpen={isOpen} onClose={() => setIsOpen(false)} metadata={metadata} />
+          
+          <MobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} metadata={metadata} />
         </div>
       </div>
     </div>
