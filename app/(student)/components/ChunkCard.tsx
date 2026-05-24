@@ -8,9 +8,9 @@ interface ChunkCardProps {
 export function ChunkCard({ chunk }: ChunkCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   // Never expose images or diagrams
-  const title = chunk.metadata?.sectionTitle || "NCERT Text";
-  const pageStr = chunk.metadata?.pageNumber ? `Page ${chunk.metadata.pageNumber}` : "";
-  const contentStr = typeof chunk.content === 'string' ? chunk.content : (chunk.text || "");
+  const title = chunk.sectionTitle || chunk.chapterTitle || "NCERT Text";
+  const pageStr = chunk.pageNumber ? `Page ${chunk.pageNumber}` : "";
+  const contentStr = chunk.textPreview || chunk.content || chunk.text || "";
   
   return (
     <div 
