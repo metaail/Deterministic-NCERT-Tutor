@@ -25,21 +25,39 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
     }
 
-    // 1. Detect Intent
-    const intent = detectIntent(request.query);
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          // 1. Detect Intent
+          const intent = detectIntent(request.query);
 
-    // 2. Plan Retrieval
-    const contextPayload = await planRetrieval(request, intent);
-    const retrievalLatency = Date.now() - startTime;
-    const cacheHit = contextPayload.textChunks ? (contextPayload.textChunks as any).isCacheHit === true : false;
+          // 2. Plan Retrieval
+          const contextPayload = await planRetrieval(request, intent);
+          const retrievalLatency = Date.now() - startTime;
+          const cacheHit = contextPayload.textChunks ? (contextPayload.textChunks as any).isCacheHit === true : false;
 
-    // 3. Initiate Streaming Pipeline
-    const stream = await runTutorAgentStream(request, contextPayload, (metrics) => {
-      // Overwrite the combined accurate retrieval time
-      metrics.retrievalLatency = retrievalLatency;
-      metrics.cacheHit = cacheHit;
-      console.log("[Stream Metrics]", metrics);
-      logMetrics("/api/chat/stream", metrics);
+          // 3. Initiate Streaming Pipeline
+          const agentStream = await runTutorAgentStream(request, contextPayload, (metrics) => {
+            // Overwrite the combined accurate retrieval time
+            metrics.retrievalLatency = retrievalLatency;
+            metrics.cacheHit = cacheHit;
+            console.log("[Stream Metrics]", metrics);
+            logMetrics("/api/chat/stream", metrics);
+          });
+          
+          const reader = agentStream.getReader();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            controller.enqueue(value);
+          }
+          controller.close();
+        } catch (error: any) {
+          console.error("[Chat Stream Generator Error]", error);
+          controller.enqueue(new TextEncoder().encode(`data: {"error": "${error.message || "Internal server error"}"}\n\n`));
+          controller.close();
+        }
+      }
     });
 
     return new Response(stream, {

@@ -6,10 +6,14 @@ import { PYQCard } from './PYQCard';
 interface MobileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  metadata: any[];
+  metadata: any;
 }
 
 export function MobileDrawer({ isOpen, onClose, metadata }: MobileDrawerProps) {
+  const textChunks = metadata?.textChunks || [];
+  const pyqs = metadata?.pyqs || [];
+  const hasItems = textChunks.length > 0 || pyqs.length > 0;
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -39,14 +43,15 @@ export function MobileDrawer({ isOpen, onClose, metadata }: MobileDrawerProps) {
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {metadata && metadata.length > 0 ? (
-                metadata.map((item, idx) => (
-                  item.type === 'pyq' ? (
-                    <PYQCard key={idx} pyq={item} />
-                  ) : (
-                    <ChunkCard key={idx} chunk={item} />
-                  )
-                ))
+              {hasItems ? (
+                <>
+                  {pyqs.map((pyq: any, idx: number) => (
+                    <PYQCard key={`pyq-${idx}`} pyq={pyq} />
+                  ))}
+                  {textChunks.map((chunk: any, idx: number) => (
+                    <ChunkCard key={`chunk-${idx}`} chunk={chunk} />
+                  ))}
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
                   <div className="p-3 bg-gray-50 rounded-full">

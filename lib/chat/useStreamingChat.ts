@@ -47,17 +47,24 @@ export function useStreamingChat() {
       }
 
       let incomingMsg: ExtendedMessage = { role: 'model', content: '' };
-      setMessages(prev => [...prev, incomingMsg]);
-      setIsLoading(false);
-
+      
       const reader = res.body?.getReader();
       const decoder = new TextDecoder('utf-8');
 
       if (reader) {
+        let isFirstData = true;
         let buffer = '';
         while (true) {
           const { value, done } = await reader.read();
-          if (done) break;
+          if (done) {
+             setIsLoading(false);
+             break;
+          }
+
+          if (isFirstData) {
+            setMessages(prev => [...prev, incomingMsg]);
+            isFirstData = false;
+          }
 
           buffer += decoder.decode(value, { stream: true });
           const parts = buffer.split('\n\n');
