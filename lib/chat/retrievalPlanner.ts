@@ -35,7 +35,14 @@ export async function planRetrieval(request: ChatRequest, intent: ChatIntent): P
       throw new Error("Chapter is not published yet.");
     }
 
-    const textChunks = results.map((r: any) => r.metadata);
+    const textChunks = results.map((r: any) => {
+      const calcScore = r.finalScore || r.denseScore || r.rrfScore || 0;
+      return {
+        ...r.metadata,
+        score: Math.max(0, Math.min(calcScore, 1.0))
+      };
+    });
+
     if ((results as any).isCacheHit) {
        (textChunks as any).isCacheHit = true;
     }

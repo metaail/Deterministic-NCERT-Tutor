@@ -17,7 +17,12 @@ export function ChatWindow({ messages, isLoading, error, onSuggestionSelect }: C
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const timeoutId = setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
+      }
+    }, 10); // Small timeout allows Markdown DOM to paint before measuring
+    return () => clearTimeout(timeoutId);
   }, [messages, isLoading]);
 
   return (

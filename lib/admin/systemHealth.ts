@@ -2,6 +2,7 @@ import { getFirebaseHealth } from './firebaseHealth';
 import { getPineconeHealth } from './pineconeHealth';
 import { getIngestionStats } from './ingestionStats';
 import { env } from '@/lib/utils/env';
+import { getGeminiUsage } from '@/lib/stats/geminiUsage';
 
 export async function getSystemHealth() {
     const envAudit = {
@@ -15,6 +16,7 @@ export async function getSystemHealth() {
     const firebase = await getFirebaseHealth();
     const pinecone = await getPineconeHealth();
     const stats = await getIngestionStats();
+    const geminiUsage = getGeminiUsage();
 
     const retrievalDiag = {
         totalVectors: pinecone.vectorCount || (stats?.totalVectors || 0),
@@ -29,6 +31,7 @@ export async function getSystemHealth() {
         pinecone,
         stats,
         retrievalDiag,
-        envAudit
+        envAudit,
+        geminiUsage
     };
 }

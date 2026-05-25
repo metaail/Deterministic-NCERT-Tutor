@@ -22,7 +22,22 @@ export function ChunkCard({ chunk }: ChunkCardProps) {
            <FileText size={14} className="text-gray-400 mt-1 flex-shrink-0" />
            <div>
               <h4 className="text-xs font-semibold text-gray-700 line-clamp-1">{title}</h4>
-              {pageStr && <span className="text-[10px] text-gray-500">{pageStr}</span>}
+              <div className="flex items-center gap-2 mt-0.5">
+                {pageStr && <span className="text-[10px] text-gray-500">{pageStr}</span>}
+                {chunk.score !== undefined && (
+                  <div className="flex items-center gap-2" title={`${Math.round(chunk.score * 100)}% Match`}>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium whitespace-nowrap">
+                      {Math.round(chunk.score * 100)}% Match
+                    </span>
+                    <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-500 rounded-full" 
+                        style={{ width: `${Math.max(0, Math.min(100, chunk.score * 100))}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
            </div>
          </div>
          <div className="text-gray-300 group-hover:text-gray-500 transition-colors">

@@ -1,17 +1,31 @@
 import Link from 'next/link';
+import { getGeminiUsage } from '@/lib/stats/geminiUsage';
 
 export default function Page() {
+  const geminiUsage = getGeminiUsage();
+
   return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="max-w-4xl w-full bg-white rounded-xl shadow-sm border border-gray-100 p-10">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="h-12 w-12 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-bold text-xl font-mono">
-            P6
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-bold text-xl font-mono">
+              P6
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900">Admin Dashboard</h1>
+              <p className="text-gray-500 font-mono text-sm mt-1">Platform Architecture Phase 6: Admin Review & Publish Workflow</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-500 font-mono text-sm mt-1">Platform Architecture Phase 6: Admin Review & Publish Workflow</p>
-          </div>
+          {geminiUsage.isNearingLimit && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-full">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+              </span>
+              <span className="text-sm font-bold tracking-tight">Capacity Nearing Limit</span>
+            </div>
+          )}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">

@@ -2,7 +2,7 @@ import React from 'react';
 import { ChunkCard } from './ChunkCard';
 import { PYQCard } from './PYQCard';
 import { X, BookOpen, Layers } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ReferenceSidebarProps {
   isOpen: boolean;

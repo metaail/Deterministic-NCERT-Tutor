@@ -1,5 +1,5 @@
 import { ChatRequest, ContextPayload } from './chatTypes';
-import { generateContentStream, generateFallbackContent } from '@/lib/gemini';
+import { generateContentStream, generateFallbackContentStream } from '@/lib/gemini';
 import { SYSTEM_PROMPT } from '@/lib/prompts/systemPrompt';
 import { buildTutorPrompt } from '@/lib/prompts/tutorPrompt';
 import { buildContextString } from './contextBuilder';
@@ -82,23 +82,34 @@ export async function runTutorAgentStream(
 
         if (isFallbackTriggered) {
           console.log("Stream fallback triggered...");
-          const fallbackRes = await generateFallbackContent(request.query, historyText);
-          const startVer = Date.now();
-          const verifiedFallback = verifier.processChunk(fallbackRes);
-          verifierWaitMs += (Date.now() - startVer);
+          const fallbackStream = await generateFallbackContentStream(request.query, historyText);
           
           if (!isFirstToken) {
              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: '\n\n...' })}\n\n`));
-          } else {
-             ttft = Date.now() - startTime;
-             isFirstToken = false;
           }
 
-          if (verifiedFallback.error) {
-             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: '\n\n[Content blocked by verifier: ' + verifiedFallback.error + ']' })}\n\n`));
-          } else if (verifiedFallback.text) {
-             fullResponse += verifiedFallback.text;
-             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: verifiedFallback.text })}\n\n`));
+          for await (const fallbackChunk of fallbackStream) {
+            const fallbackText = fallbackChunk.text;
+            if (!fallbackText) continue;
+
+            if (isFirstToken) {
+               ttft = Date.now() - startTime;
+               isFirstToken = false;
+            }
+
+            const startVer = Date.now();
+            const verifiedFallback = verifier.processChunk(fallbackText);
+            verifierWaitMs += (Date.now() - startVer);
+
+            if (verifiedFallback.error) {
+               controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: '\n\n[Content blocked by verifier: ' + verifiedFallback.error + ']' })}\n\n`));
+               break;
+            }
+
+            if (verifiedFallback.text) {
+               fullResponse += verifiedFallback.text;
+               controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: verifiedFallback.text })}\n\n`));
+            }
           }
         }
         

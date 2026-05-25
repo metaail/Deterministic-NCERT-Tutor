@@ -158,6 +158,26 @@ export default function SystemDiagnosticsPage() {
                         ))}
                     </ul>
                 </div>
+                {/* Gemini Usage Audit */}
+                <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                    <h2 className="font-bold text-gray-800 mb-4 border-b pb-2 flex justify-between">
+                        Gemini Quota Tracker
+                        {diagnostics.geminiUsage?.isNearingLimit ? (
+                            <span className="px-2 py-1 rounded text-xs font-bold bg-amber-100 text-amber-800">
+                                CAPACITY WARNING
+                            </span>
+                        ) : (
+                            <span className="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-800">
+                                NORMAL
+                            </span>
+                        )}
+                    </h2>
+                    <ul className="text-sm space-y-2 text-gray-600">
+                        <li>Requests Made: {diagnostics.geminiUsage?.requests || 0}</li>
+                        <li>Assumed Limit: {diagnostics.geminiUsage?.limit || 1500}</li>
+                        <li>Usage Ratio: {(((diagnostics.geminiUsage?.requests || 0) / (diagnostics.geminiUsage?.limit || 1)) * 100).toFixed(1)}%</li>
+                    </ul>
+                </div>
             </div>
         </div>
     );

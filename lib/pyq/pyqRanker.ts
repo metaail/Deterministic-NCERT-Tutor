@@ -29,6 +29,8 @@ export function rankPyqs(candidates: PyqQuestion[], originalQuery: string): PyqQ
     .sort((a, b) => b._score - a._score)
     .map(q => {
       const { _score, ...rest } = q;
-      return rest as PyqQuestion;
+      // Normalize score for UI display (cap at 1.0)
+      const normalizedScore = Math.min(_score / 15, 1.0); 
+      return { ...rest, score: normalizedScore } as PyqQuestion & { score: number };
     });
 }

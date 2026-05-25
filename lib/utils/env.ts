@@ -6,15 +6,15 @@ import { z } from 'zod';
  */
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  NEXT_PUBLIC_FIREBASE_API_KEY: z.string().min(1),
-  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().min(1),
-  NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().min(1),
-  FIREBASE_CLIENT_EMAIL: z.string().email(),
-  FIREBASE_PRIVATE_KEY: z.string().min(1),
-  PINECONE_API_KEY: z.string().min(1),
-  PINECONE_ENVIRONMENT: z.string().min(1),
-  OPENAI_API_KEY: z.string().min(1),
-  GEMINI_API_KEY: z.string().min(1),
+  NEXT_PUBLIC_FIREBASE_API_KEY: z.string().optional(),
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().optional(),
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),
+  FIREBASE_CLIENT_EMAIL: z.string().email().optional(),
+  FIREBASE_PRIVATE_KEY: z.string().optional(),
+  PINECONE_API_KEY: z.string().optional(),
+  PINECONE_ENVIRONMENT: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional(),
 });
 
 const parsedEnv = envSchema.safeParse({
