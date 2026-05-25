@@ -10,8 +10,8 @@ function getAiClient() {
     return aiClient;
 }
 
-export const CHAT_MODEL = 'gemini-3.1-pro-preview';
-export const FALLBACK_MODEL = 'gemini-3.1-pro-preview';
+export const CHAT_MODEL = 'gemini-3.5-flash';
+export const FALLBACK_MODEL = 'gemini-3.5-flash';
 export const EMBEDDING_MODEL = 'gemini-embedding-2-preview';
 
   export async function generateContentStream(prompt: string, systemInstruction?: string, retries = 2) {

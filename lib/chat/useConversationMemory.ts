@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ExtendedMessage } from './useStreamingChat';
 import { auth, db } from '../firebase/client';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -59,7 +59,7 @@ export function useConversationMemory() {
     }
   }, [userId]);
 
-  const updateMessages = (newMessages: ExtendedMessage[] | ((prev: ExtendedMessage[]) => ExtendedMessage[])) => {
+  const updateMessages = useCallback((newMessages: ExtendedMessage[] | ((prev: ExtendedMessage[]) => ExtendedMessage[])) => {
     setMessages(prev => {
       const next = typeof newMessages === 'function' ? newMessages(prev) : newMessages;
       try {
@@ -76,9 +76,9 @@ export function useConversationMemory() {
       }
       return next;
     });
-  };
+  }, [userId]);
 
-  const clearMemory = () => {
+  const clearMemory = useCallback(() => {
     sessionStorage.removeItem(STORAGE_KEY);
     setMessages([]);
     
@@ -88,7 +88,7 @@ export function useConversationMemory() {
         console.error("Failed to clear memory in Firestore", err);
       });
     }
-  };
+  }, [userId]);
 
   return { memoryMessages: messages, updateMessages, clearMemory };
 }
