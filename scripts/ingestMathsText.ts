@@ -74,6 +74,7 @@ async function main() {
         const { normalizeText } = await import('@/lib/ingestion/stages/03-normalizeText');
         const { detectStructure } = await import('@/lib/ingestion/stages/04-detectStructure');
         const { buildChunks } = await import('@/lib/ingestion/stages/05-buildChunks');
+        const { validateChunks } = await import('@/lib/ingestion/stages/05b-validateChunks');
         const { buildChapterStructureIndex } = await import('@/lib/ingestion/stages/06-buildChapterStructureIndex');
         const { saveFirestore } = await import('@/lib/ingestion/stages/07-saveFirestore');
         const { finalizeChapter } = await import('@/lib/ingestion/stages/08-finalizeChapter');
@@ -84,6 +85,7 @@ async function main() {
         c = await normalizeText(c);
         c = await detectStructure(c);
         c = await buildChunks(c);
+        c = await validateChunks(c);
         c = await buildChapterStructureIndex(c);
         c = await saveFirestore(c);
         await finalizeChapter(c);

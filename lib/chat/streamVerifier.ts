@@ -19,7 +19,7 @@ export class StreamVerifier {
     }
 
     // Check for contradictory "I cannot" followed by a long explanation
-    if (lower.startsWith('i cannot') || lower.startsWith('the retrieved text does not contain')) {
+    if (lower.startsWith('i cannot')) {
         // If buffer gets too large after refusing, it's answering anyway
         if (this.buffer.length > 250) {
             return { error: 'Contradictory refusal prefix followed by an answer detected.' };

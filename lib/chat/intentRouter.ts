@@ -7,7 +7,7 @@ export function detectIntent(query: string): ChatIntent {
     return 'pyq_query';
   }
 
-  if (/how many (elements|items|members).*(in|are in).*(×|x|cross|\*)/i.test(lowerQuery) || /^what is \d+[\s\+\-\*\/]+\d+/i.test(lowerQuery) || /simple arithmetic/i.test(lowerQuery)) {
+  if (/how many (elements|items|members).*(in|are in).*(×|x|cross|\*)/i.test(lowerQuery) || /^what is \d+[\s\+\-\*\/]+\d+/i.test(lowerQuery) || /simple arithmetic/i.test(lowerQuery) || /^[\d\s\+\-\*\/\(\)\^\.]+\??\s*$/.test(query)) {
     return 'simple_math_query';
   }
 

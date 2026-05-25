@@ -5,6 +5,7 @@ import { validateIdentity } from './stages/02b-validateIdentity';
 import { normalizeText } from './stages/03-normalizeText';
 import { detectStructure } from './stages/04-detectStructure';
 import { buildChunks } from './stages/05-buildChunks';
+import { validateChunks } from './stages/05b-validateChunks';
 import { buildChapterStructureIndex } from './stages/06-buildChapterStructureIndex';
 import { saveFirestore } from './stages/07-saveFirestore';
 import { finalizeChapter } from './stages/08-finalizeChapter';
@@ -22,6 +23,7 @@ export async function runIngestionPipeline(initialContext: IngestionContext): Pr
     ctx = await normalizeText(ctx);
     ctx = await detectStructure(ctx);
     ctx = await buildChunks(ctx);
+    ctx = await validateChunks(ctx);
     ctx = await buildChapterStructureIndex(ctx);
     ctx = await saveFirestore(ctx);
     await finalizeChapter(ctx);
