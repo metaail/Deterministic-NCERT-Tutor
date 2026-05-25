@@ -14,6 +14,11 @@ function formatFirebasePrivateKey(key: string): string {
 }
 
 const key = env.FIREBASE_PRIVATE_KEY;
+if (!key) {
+  console.error("Missing FIREBASE_PRIVATE_KEY");
+  process.exit(1);
+}
+
 console.log("Raw Length:", key?.length);
 console.log("Starts with '?' or double quotes:", key?.startsWith('"'));
 

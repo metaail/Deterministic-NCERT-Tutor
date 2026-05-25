@@ -7,6 +7,11 @@ async function cleanup() {
     if (!admin.apps.length) {
         admin.initializeApp({ projectId: env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'demo-project' });
     }
+
+    if (!env.PINECONE_API_KEY) {
+        console.error("Missing PINECONE_API_KEY");
+        process.exit(1);
+    }
     const db = getFirestore();
     const pc = new Pinecone({ apiKey: env.PINECONE_API_KEY });
     const index = pc.Index(process.env.PINECONE_INDEX || 'default-index');
