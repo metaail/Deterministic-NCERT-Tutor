@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { ChunkCard } from './ChunkCard';
+import { EvidenceCard } from './EvidenceCard';
 import { PYQCard } from './PYQCard';
 
 interface MobileDrawerProps {
@@ -49,7 +49,7 @@ export function MobileDrawer({ isOpen, onClose, metadata }: MobileDrawerProps) {
                     <PYQCard key={`pyq-${idx}`} pyq={pyq} />
                   ))}
                   {textChunks.map((chunk: any, idx: number) => (
-                    <ChunkCard key={`chunk-${idx}`} chunk={chunk} />
+                    <EvidenceCard key={`chunk-${idx}`} chunk={chunk} />
                   ))}
                 </>
               ) : (

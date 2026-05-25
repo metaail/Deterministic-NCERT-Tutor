@@ -5,7 +5,7 @@ import { useStreamingChat } from '@/lib/chat/useStreamingChat';
 import { useConversationMemory } from '@/lib/chat/useConversationMemory';
 import { useReferences } from '@/lib/chat/useReferences';
 import { ChatWindow } from './components/ChatWindow';
-import { ReferenceSidebar } from './components/ReferenceSidebar';
+import { AnswerEvidence } from './components/AnswerEvidence';
 import { SubjectSwitcher } from './components/SubjectSwitcher';
 import { ChapterNavigator } from './components/ChapterNavigator';
 import { PerformanceBadge } from './components/PerformanceBadge';
@@ -208,8 +208,8 @@ export default function StudentChatPage() {
              </div>
           </main>
           
-          {/* Reference Sidebar */}
-          <ReferenceSidebar isOpen={isOpen} onClose={() => setIsOpen(false)} metadata={metadata} />
+          {/* Answer Evidence Sidebar */}
+          <AnswerEvidence isOpen={isOpen} onClose={() => setIsOpen(false)} metadata={metadata} />
           
           <MobileDrawer isOpen={isMobileDrawerOpen} onClose={() => setIsMobileDrawerOpen(false)} metadata={metadata} />
         </div>
