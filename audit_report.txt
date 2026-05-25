@@ -1,0 +1,45 @@
+Starting Phase 7D Firestore Data Structure and Schema Audit...
+
+========================================
+         FIRESTORE SCHEMA AUDIT         
+========================================
+
+Collection: chapters
+Total Docs: 2
+Invalid:    2
+Inconsist.: Invalid field 'chapterKey' in ch-maths-1779287679917: Invalid input: expected string, received undefined, Invalid field 'subject' in ch-maths-1779287679917: Invalid option: expected one of "Physics"|"Chemistry"|"Biology"|"Mathematics", Invalid field 'subjectCode' in ch-maths-1779287679917: Invalid option: expected one of "042"|"043"|"044"|"041", Invalid field 'classLevel' in ch-maths-1779287679917: Invalid option: expected one of "Class 11"|"Class 12", Invalid field 'chapterNumber' in ch-maths-1779287679917: Invalid input: expected number, received undefined...
+----------------------------------------
+Collection: chapterChunks
+Total Docs: 16
+Invalid:    0
+----------------------------------------
+Collection: chapterStructureIndex
+Total Docs: 7
+Invalid:    0
+----------------------------------------
+Collection: ingestionJobs
+Total Docs: 7
+Invalid:    7
+Inconsist.: Invalid field 'jobId' in job-1779286630715: Invalid input: expected string, received undefined, Invalid field 'chapterKey' in job-1779286630715: Invalid input: expected string, received undefined, Invalid field 'logs' in job-1779286630715: Invalid input: expected array, received undefined, Invalid field 'createdAt' in job-1779286630715: Invalid input: expected string, received undefined, Invalid field 'jobId' in job-1779286735635: Invalid input: expected string, received undefined...
+----------------------------------------
+Collection: pyqPapers
+Total Docs: 0
+Invalid:    0
+----------------------------------------
+Collection: pyqQuestions
+Total Docs: 0
+Invalid:    0
+----------------------------------------
+Collection: tutorSessions
+Total Docs: 54
+Invalid:    0
+----------------------------------------
+Collection: adminUsers
+Total Docs: 0
+Invalid:    0
+----------------------------------------
+
+Audit Complete.
+Total Documents Flagged: 9
+
+❌ ISSUES DETECTED. See report above for fixes before proceeding to Phase 8.

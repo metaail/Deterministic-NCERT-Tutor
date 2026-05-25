@@ -6,7 +6,10 @@ import { z } from 'zod';
 export const SubjectEnum = z.enum(['Physics', 'Chemistry', 'Biology', 'Mathematics']);
 export const SubjectCodeEnum = z.enum(['042', '043', '044', '041']);
 export const ClassLevelEnum = z.enum(['Class 11', 'Class 12']);
-export const IngestionStatusEnum = z.enum(['uploaded', 'processing', 'indexed', 'failed']);
+
+export const ChapterStatusEnum = z.enum(['uploaded', 'processing', 'indexed', 'published', 'failed']);
+export const ChunkStatusEnum = z.enum(['draft', 'published']);
+export const IngestionStatusEnum = z.enum(['uploaded', 'processing', 'indexed', 'failed']); // Legacy/Job status
 
 // ============================================================================
 // Chapters Collection Schema
@@ -35,7 +38,7 @@ export const ChapterDocumentSchema = z.object({
   subjectMismatchWarning: z.boolean().default(false),
   contentHash: z.string().optional(),
 
-  status: IngestionStatusEnum,
+  status: ChapterStatusEnum,
   createdAt: z.string().datetime(), 
   updatedAt: z.string().datetime(),
 }).strict();
@@ -98,13 +101,14 @@ export const ChapterChunkSchema = z.object({
   formulaLatexList: z.array(z.string()).default([]),
 
   text: z.string().min(1),
+  contentHash: z.string().optional(),
   
   // Phase 2 Defualts - Vectors are FORBIDDEN in Firestore
   embeddingId: z.string().default(''),
   embeddingModel: z.string().default('not_generated_phase_2'),
   embeddingStatus: z.string().default('pending'),
   
-  status: IngestionStatusEnum,
+  status: ChunkStatusEnum,
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 }).strict();

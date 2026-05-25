@@ -16,7 +16,7 @@ export function useIsMobile() {
     const onChange = () => checkIsMobile()
     
     mql.addEventListener("change", onChange)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    //
     checkIsMobile() // Set initial value during effect execution (will run after first paint)
     
     return () => mql.removeEventListener("change", onChange)

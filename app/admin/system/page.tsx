@@ -27,7 +27,7 @@ export default function SystemDiagnosticsPage() {
     }, []);
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         loadDiagnostics();
     }, [loadDiagnostics]);
 

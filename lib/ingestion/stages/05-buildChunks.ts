@@ -111,7 +111,7 @@ export async function buildChunks(ctx: IngestionContext): Promise<IngestionConte
         embeddingId: '',
         embeddingModel: 'not_generated_phase_2',
         embeddingStatus: 'pending',
-        status: 'indexed',
+        status: 'draft',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };

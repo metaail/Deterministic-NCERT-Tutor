@@ -2,6 +2,7 @@ import { getPineconeClient, INDEX_NAME_DENSE } from './client';
 import { generateEmbedding, EMBEDDING_MODEL } from './embedding';
 import { getNamespace } from './namespace';
 import { PineconeMetadataSchema, PineconeMetadata } from './metadataSchema';
+import { mapToVectorStatus } from './statusMapper';
 import { adminDb } from '@/lib/firebase/admin';
 import { ChapterChunk } from '@/types';
 import * as crypto from 'crypto';
@@ -26,10 +27,6 @@ export async function upsertPendingChunks() {
 
     for (const doc of snapshot.docs) {
         const chunk = doc.data() as ChapterChunk;
-
-        // Skip draft chunks indexing as published (or index with current status)
-        // Never index draft chunks as published per requirements.
-        const effectiveStatus = chunk.status === 'indexed' ? 'published' : 'draft';
 
         // 2. Generate text embeddings
         const vector = await generateEmbedding(chunk.text);
@@ -97,7 +94,7 @@ export async function upsertPendingChunks() {
             formulaLatexList: chunk.formulaLatexList || [],
             
             sourceType: "NCERT",
-            status: effectiveStatus as "published" | "draft",
+            status: mapToVectorStatus(chunk.status || ''),
             embeddingModel: EMBEDDING_MODEL,
             embeddingStatus: "indexed",
             

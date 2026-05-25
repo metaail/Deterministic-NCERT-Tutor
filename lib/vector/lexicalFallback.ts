@@ -13,7 +13,7 @@ export async function lexicalSearchFallback(
     
     const snapshot = await adminDb.collection('chapterChunks')
         .where('chapterKey', '==', chapterKey)
-        .where('status', 'in', ['published', 'indexed'])
+        .where('status', '==', 'published')
         .get();
         
     const tokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);

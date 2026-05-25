@@ -67,11 +67,11 @@ export default function StudentChatPage() {
     );
     if (filtered.length > 0) {
       if (!filtered.find(c => c.id === chapterKey)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+        //
         setChapterKey(filtered[0].id);
       }
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       setChapterKey('');
     }
   }, [subjectCode, classLevel, availableChapters]); // eslint-disable-line react-hooks/exhaustive-deps
