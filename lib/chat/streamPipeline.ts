@@ -48,25 +48,11 @@ export async function runTutorAgentStream(
       const verifier = createStreamVerifier(controller);
 
       try {
-        let isFallbackTriggered = false;
-        let initialBuffer = '';
-        let initialChunkCount = 0;
-
         controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ metadata: { textChunks: payload.textChunks, intent: payload.intent } })}\n\n`));
 
         for await (const chunk of stream) {
           const text = chunk.text;
           if (!text) continue;
-
-          // Check for fallback in first few chunks
-          if (initialChunkCount < 3) {
-            initialBuffer += text.toLowerCase();
-            initialChunkCount++;
-            if (initialBuffer.includes("cannot find") || initialBuffer.includes("not find") || initialBuffer.includes("not present") || initialBuffer.includes("not defined")) {
-              isFallbackTriggered = true;
-              break;
-            }
-          }
 
           if (isFirstToken) {
             ttft = Date.now() - startTime;
@@ -82,42 +68,17 @@ export async function runTutorAgentStream(
             break;
           }
 
+          // If it's a strict not-found case, intercept and override
           if (verifiedChunk.text) {
+             const lowerResp = (fullResponse + verifiedChunk.text).toLowerCase();
+             if (lowerResp.includes('the retrieved text does not contain this information')) {
+                 controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: '\n\nThis concept is not available in the currently selected NCERT chapter. Please switch to the relevant chapter or ask a question from the selected chapter.' })}\n\n`));
+                 controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ done: true })}\n\n`));
+                 break;
+             }
+             
              fullResponse += verifiedChunk.text;
              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: verifiedChunk.text })}\n\n`));
-          }
-        }
-
-        if (isFallbackTriggered) {
-          console.log("Stream fallback triggered...");
-          const fallbackStream = await generateFallbackContentStream(request.query, historyText);
-          
-          if (!isFirstToken) {
-             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: '\n\n...' })}\n\n`));
-          }
-
-          for await (const fallbackChunk of fallbackStream) {
-            const fallbackText = fallbackChunk.text;
-            if (!fallbackText) continue;
-
-            if (isFirstToken) {
-               ttft = Date.now() - startTime;
-               isFirstToken = false;
-            }
-
-            const startVer = Date.now();
-            const verifiedFallback = verifier.processChunk(fallbackText);
-            verifierWaitMs += (Date.now() - startVer);
-
-            if (verifiedFallback.error) {
-               controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: '\n\n[Content blocked by verifier: ' + verifiedFallback.error + ']' })}\n\n`));
-               break;
-            }
-
-            if (verifiedFallback.text) {
-               fullResponse += verifiedFallback.text;
-               controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: verifiedFallback.text })}\n\n`));
-            }
           }
         }
         

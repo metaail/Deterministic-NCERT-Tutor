@@ -52,9 +52,24 @@ export async function POST(req: NextRequest) {
           }
 
           // 2. Plan Retrieval
+          const startRetrieval = Date.now();
           const contextPayload = await planRetrieval(request, intent);
-          const retrievalLatency = Date.now() - startTime;
+          const retrievalLatency = Date.now() - startRetrieval;
           const cacheHit = contextPayload.textChunks ? (contextPayload.textChunks as any).isCacheHit === true : false;
+
+          // 2.5 Evaluate Grounding Guard
+          const startGuard = Date.now();
+          const { evaluateGroundingConfidence } = await import('@/lib/chat/groundingGuard');
+          const grounding = evaluateGroundingConfidence(request.query, contextPayload, request.chapterKey, request.subjectCode);
+          const guardLatency = Date.now() - startGuard;
+
+          if (!grounding.isGrounded) {
+             console.log(`[Stream Metrics] Intent=${Date.now() - startTime}ms, Retrieval=${retrievalLatency}ms, Guard=${guardLatency}ms | BLOCKED: ${grounding.reason}`);
+             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: grounding.reason })}\n\n`));
+             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ done: true })}\n\n`));
+             controller.close();
+             return;
+          }
 
           // 3. Initiate Streaming Pipeline
           const agentStream = await runTutorAgentStream(request, contextPayload, (metrics) => {
@@ -74,7 +89,7 @@ export async function POST(req: NextRequest) {
           controller.close();
         } catch (error: any) {
           console.error("[Chat Stream Generator Error]", error);
-          controller.enqueue(new TextEncoder().encode(`data: {"error": "${error.message || "Internal server error"}"}\n\n`));
+          controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ error: error.message || "Internal server error" })}\n\n`));
           controller.close();
         }
       }

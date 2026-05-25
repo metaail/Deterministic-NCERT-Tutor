@@ -1,6 +1,7 @@
 import { adminDb } from '../lib/firebase/admin';
 
 async function main() {
+  if (!adminDb) throw new Error("adminDb is null");
   const chunksSnap = await adminDb.collection('chapterChunks').get();
   
   const chaptersMap = new Map();

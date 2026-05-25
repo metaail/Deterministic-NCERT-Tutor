@@ -18,6 +18,19 @@ export class StreamVerifier {
       return { error: 'Image markdown tags detected.' };
     }
 
+    // Check for contradictory "I cannot" followed by a long explanation
+    if (lower.startsWith('i cannot') || lower.startsWith('the retrieved text does not contain')) {
+        // If buffer gets too large after refusing, it's answering anyway
+        if (this.buffer.length > 250) {
+            return { error: 'Contradictory refusal prefix followed by an answer detected.' };
+        }
+    }
+
+    // Reject unsupported claims / unrelated chapter content by looking for strict keywords indicating it's using external knowledge
+    if (lower.includes('while the context does not') || lower.includes('outside the context') || lower.includes('general knowledge') || lower.includes('however, in general') || lower.includes('although not in the ncert')) {
+        return { error: 'Model generated answer outside the retrieved NCERT context.' };
+    }
+
     // Fix math delimiters $$ -> \[ or \]
     // To do this safely over streaming, we might need a state machine.
     // Let's do a simple replace on the entire chunk if it has a complete $$.

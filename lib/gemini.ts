@@ -10,8 +10,8 @@ function getAiClient() {
     return aiClient;
 }
 
-export const CHAT_MODEL = 'gemini-3.5-flash';
-export const FALLBACK_MODEL = 'gemini-3.5-flash';
+export const CHAT_MODEL = 'gemini-3.1-flash-lite';
+export const FALLBACK_MODEL = 'gemini-3.1-flash-lite';
 export const EMBEDDING_MODEL = 'gemini-embedding-2-preview';
 
   export async function generateContentStream(prompt: string, systemInstruction?: string, retries = 2, maxOutputTokens?: number) {
@@ -35,12 +35,8 @@ export const EMBEDDING_MODEL = 'gemini-embedding-2-preview';
             });
             return responseStream;
         } catch (err: any) {
-            const errMsg = err.message || JSON.stringify(err);
-            if (err.status === 429 || err.status === 'RESOURCE_EXHAUSTED' || errMsg.includes('429') || errMsg.includes('Quota exceeded')) {
-                console.warn(`[Rate Limit] Retrying stream in 2 seconds...`);
-                await new Promise(res => setTimeout(res, 2000));
-                lastError = err;
-                continue;
+            if (err.status === 429) {
+                throw new Error("Rate limit exceeded. You have reached the usage limit. Please try again in 30 seconds.");
             }
             throw err;
         }
@@ -70,12 +66,8 @@ export const EMBEDDING_MODEL = 'gemini-embedding-2-preview';
   
         return response.text;
       } catch (err: any) {
-        const errMsg = err.message || JSON.stringify(err);
-        if (err.status === 429 || err.status === 'RESOURCE_EXHAUSTED' || errMsg.includes('429') || errMsg.includes('Quota exceeded')) {
-          console.warn(`[Rate Limit] Retrying in 2 seconds...`);
-          await new Promise(res => setTimeout(res, 2000));
-          lastError = err;
-          continue;
+        if (err.status === 429) {
+          throw new Error("Rate limit exceeded. You have reached the usage limit. Please try again in 30 seconds.");
         }
         throw err;
       }
@@ -106,12 +98,8 @@ export async function generateFallbackContent(prompt: string, historyText: strin
 
       return response.text;
     } catch (err: any) {
-      const errMsg = err.message || JSON.stringify(err);
-      if (err.status === 429 || err.status === 'RESOURCE_EXHAUSTED' || errMsg.includes('429') || errMsg.includes('Quota exceeded')) {
-        console.warn(`[Rate Limit] Retrying in 2 seconds...`);
-        await new Promise(res => setTimeout(res, 2000));
-        lastError = err;
-        continue;
+      if (err.status === 429) {
+        throw new Error("Rate limit exceeded. You have reached the usage limit. Please try again in 30 seconds.");
       }
       throw err;
     }
@@ -138,12 +126,8 @@ export async function generateFallbackContentStream(prompt: string, historyText:
 
       return responseStream;
     } catch (err: any) {
-      const errMsg = err.message || JSON.stringify(err);
-      if (err.status === 429 || err.status === 'RESOURCE_EXHAUSTED' || errMsg.includes('429') || errMsg.includes('Quota exceeded')) {
-        console.warn(`[Rate Limit] Retrying in 2 seconds...`);
-        await new Promise(res => setTimeout(res, 2000));
-        lastError = err;
-        continue;
+      if (err.status === 429) {
+        throw new Error("Rate limit exceeded. You have reached the usage limit. Please try again in 30 seconds.");
       }
       throw err;
     }

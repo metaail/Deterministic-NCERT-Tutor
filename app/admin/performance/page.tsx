@@ -8,9 +8,16 @@ export default function PerformanceDashboard() {
 
   useEffect(() => {
     fetch('/api/admin/metrics')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch metrics');
+        return res.json();
+      })
       .then(data => {
         setMetrics(data);
+        setLoading(false);
+      })
+      .catch(e => {
+        console.error("Failed to fetch:", e);
         setLoading(false);
       });
   }, []);

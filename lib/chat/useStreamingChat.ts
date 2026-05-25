@@ -149,7 +149,11 @@ export function useStreamingChat() {
           continue;
         }
         
-        setError(msg);
+        if (msg === 'Failed to fetch') {
+          setError('Network error: Unable to connect to the server. Please check your connection or try again later.');
+        } else {
+          setError(msg);
+        }
         setIsLoading(false);
         break;
       }
