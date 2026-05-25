@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const ai = new GoogleGenAI({ apiKey });
     
     const responseStream = await ai.models.generateContentStream({
-      model: "gemini-1.5-pro",
+      model: "gemini-3.1-pro-preview",
       contents: history + "\n\nUser: " + prompt,
       config: {
         systemInstruction: "You are an advanced mathematics tutor specializing in JEE/NEET. Provide highly detailed mathematical explanations. Use purely markdown text.",
