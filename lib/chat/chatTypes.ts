@@ -6,7 +6,9 @@ export type ChatIntent =
   | 'formula_reference'
   | 'exercise_solution'
   | 'example_query'
-  | 'practice_generation';
+  | 'practice_generation'
+  | 'simple_math_query'
+  | 'pyq_query';
 
 export interface ChatMessage {
   role: 'user' | 'model';

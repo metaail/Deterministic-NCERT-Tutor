@@ -31,8 +31,8 @@ export async function executeHybridSearch(
     // 2. Lexical Fallback if BOTH Dense and Sparse are empty or poor
     let sparseRes: any[] = sparseResInitial;
     // Pinecone-only fast path optimization: fallback only if high confidence matches are missing
-    const hasHighConfidence = denseRes.length > 0 && denseRes[0].score && denseRes[0].score > 0.70;
-    if (!hasHighConfidence && denseRes.length < 3) {
+    const usefulResults = denseRes.filter(r => r.score && r.score > 0.65).length;
+    if (usefulResults < 2) {
         sparseRes = await lexicalSearchFallback(query, subjectCode, classLevel, chapterKey, topKSparse);
     }
 

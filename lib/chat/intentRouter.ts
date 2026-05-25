@@ -3,6 +3,14 @@ import { ChatIntent } from './chatTypes';
 export function detectIntent(query: string): ChatIntent {
   const lowerQuery = query.toLowerCase();
   
+  if (/(pyq|neet|jee|previous year|asked in|exam relevance)/i.test(lowerQuery)) {
+    return 'pyq_query';
+  }
+
+  if (/how many (elements|items|members).*(in|are in).*(×|x|cross|\*)/i.test(lowerQuery) || /^what is \d+[\s\+\-\*\/]+\d+/i.test(lowerQuery) || /simple arithmetic/i.test(lowerQuery)) {
+    return 'simple_math_query';
+  }
+
   if (/how many (figures|tables|exercises)|list (exercises|examples|summary)|show summary/i.test(lowerQuery)) {
     return 'structure_query';
   }

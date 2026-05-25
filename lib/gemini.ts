@@ -14,7 +14,7 @@ export const CHAT_MODEL = 'gemini-3.5-flash';
 export const FALLBACK_MODEL = 'gemini-3.5-flash';
 export const EMBEDDING_MODEL = 'gemini-embedding-2-preview';
 
-  export async function generateContentStream(prompt: string, systemInstruction?: string, retries = 2) {
+  export async function generateContentStream(prompt: string, systemInstruction?: string, retries = 2, maxOutputTokens?: number) {
     const ai = getAiClient();
     if (!ai) throw new Error("GEMINI_API_KEY not configured.");
     
@@ -22,12 +22,16 @@ export const EMBEDDING_MODEL = 'gemini-embedding-2-preview';
     for (let i = 0; i < retries; i++) {
         try {
             incrementGeminiUsage();
+            const config: any = {
+                systemInstruction: systemInstruction,
+            };
+            if (maxOutputTokens) {
+                config.maxOutputTokens = maxOutputTokens;
+            }
             const responseStream = await ai.models.generateContentStream({
                 model: CHAT_MODEL,
                 contents: prompt,
-                config: {
-                    systemInstruction: systemInstruction,
-                }
+                config: config
             });
             return responseStream;
         } catch (err: any) {

@@ -24,10 +24,18 @@ export async function runTutorAgentStream(
 
   const finalPrompt = historyText + prompt;
 
-  // Start PYQ search concurrently
-  const pyqPromise = searchPyq(request.query, request.subjectCode, request.classLevel, request.chapterKey);
+  // Start PYQ search concurrently, ONLY if pyq_query
+  let pyqPromise: Promise<any[]> | null = null;
+  if (payload.intent === 'pyq_query') {
+      pyqPromise = searchPyq(request.query, request.subjectCode, request.classLevel, request.chapterKey);
+  }
 
-  let stream = await generateContentStream(finalPrompt, SYSTEM_PROMPT);
+  // Set Gemini max tokens based on intent
+  let maxOutputTokens = 500;
+  if (payload.intent === 'exercise_solution') maxOutputTokens = 800;
+  else if (payload.intent === 'structure_query') maxOutputTokens = 250;
+
+  let stream = await generateContentStream(finalPrompt, SYSTEM_PROMPT, 2, maxOutputTokens);
   const startGeminiTime = Date.now();
 
   return new ReadableStream({
@@ -114,16 +122,27 @@ export async function runTutorAgentStream(
         }
         
         // Wait for PYQ search
-        const pyqs = await pyqPromise;
-        const pyqFormatted = formatPyqContext(pyqs);
-        // Verify the PYQ formatting as well to be safe against fake citations
-        const pyqVerification = verifyResponse(pyqFormatted, pyqs);
-        const safePyqText = pyqVerification.isValid ? pyqFormatted : "PYQ Match: No exact indexed PYQ match was found for this query. However, this concept is relevant for NEET/JEE preparation.";
-        
-        // Append pyqs
-        const finalPyqs = "\n\n---\n\n" + safePyqText;
-        controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: finalPyqs, metadata: { pyqs } })}\n\n`));
-        fullResponse += finalPyqs;
+        if (pyqPromise) {
+          let pyqs: any[] = [];
+          try {
+             pyqs = await Promise.race([
+                pyqPromise,
+                new Promise<any[]>((_, reject) => setTimeout(() => reject(new Error('PYQ timeout')), 3000))
+             ]);
+          } catch (e) {
+             console.warn("PYQ matching skipped due to timeout:", e);
+             pyqs = [];
+          }
+          const pyqFormatted = formatPyqContext(pyqs);
+          // Verify the PYQ formatting as well to be safe against fake citations
+          const pyqVerification = verifyResponse(pyqFormatted, pyqs);
+          const safePyqText = pyqVerification.isValid ? pyqFormatted : "PYQ Match: No exact indexed PYQ match was found for this query. However, this concept is relevant for NEET/JEE preparation.";
+          
+          // Append pyqs
+          const finalPyqs = "\n\n---\n\n" + safePyqText;
+          controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: finalPyqs, metadata: { pyqs } })}\n\n`));
+          fullResponse += finalPyqs;
+        }
 
         const endTime = Date.now();
         const totalLatency = endTime - startTime;
