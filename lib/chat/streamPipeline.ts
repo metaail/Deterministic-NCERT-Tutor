@@ -18,15 +18,9 @@ export async function runTutorAgentStream(
   const contextString = buildContextString(payload);
   const prompt = buildTutorPrompt(request.query, contextString);
   
-  let historyText = "";
-  if (request.history && request.history.length > 0) {
-      if (payload.responseMode === 'concise') {
-         const shortHistory = request.history.slice(-2);
-         historyText = "Previous Conversation:\n" + shortHistory.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n") + "\n\n";
-      } else {
-         historyText = "Previous Conversation:\n" + request.history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n") + "\n\n";
-      }
-  }
+  const historyText = request.history && request.history.length > 0 
+    ? "Previous Conversation:\n" + request.history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n") + "\n\n"
+    : "";
 
   const finalPrompt = historyText + prompt;
 

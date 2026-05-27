@@ -4,15 +4,18 @@ import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
 import { QuerySuggestions } from './QuerySuggestions';
 import { SkeletonLoader } from './SkeletonLoader';
+import { Maximize, Minimize } from 'lucide-react';
 
 interface ChatWindowProps {
   messages: ExtendedMessage[];
   isLoading: boolean;
   error: string;
   onSuggestionSelect?: (query: string) => void;
+  isFocusMode?: boolean;
+  onToggleFocusMode?: () => void;
 }
 
-export function ChatWindow({ messages, isLoading, error, onSuggestionSelect }: ChatWindowProps) {
+export function ChatWindow({ messages, isLoading, error, onSuggestionSelect, isFocusMode, onToggleFocusMode }: ChatWindowProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -26,8 +29,18 @@ export function ChatWindow({ messages, isLoading, error, onSuggestionSelect }: C
   }, [messages, isLoading]);
 
   return (
-    <div ref={containerRef} className="flex-1 overflow-y-auto bg-gray-50/50 p-4 sm:p-6 flex flex-col items-center">
-      <div className="w-full max-w-4xl xl:max-w-5xl flex flex-col gap-6 pb-20">
+    <div ref={containerRef} className="flex-1 overflow-y-auto bg-gray-50/50 p-4 sm:p-6 flex flex-col items-center relative">
+      {onToggleFocusMode && (
+        <button
+          onClick={onToggleFocusMode}
+          className="absolute top-4 right-4 z-10 p-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg shadow-sm text-gray-500 hover:text-indigo-600 transition-colors"
+          title={isFocusMode ? "Exit Focus Mode" : "Enter Focus Mode"}
+        >
+          {isFocusMode ? <Minimize size={18} /> : <Maximize size={18} />}
+        </button>
+      )}
+      
+      <div className="w-full max-w-4xl xl:max-w-5xl flex flex-col gap-6 pb-20 mt-4 sm:mt-0">
         {messages.length === 0 && !isLoading && (
           <div className="flex flex-col items-center justify-center mt-12 sm:mt-20 text-center space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">

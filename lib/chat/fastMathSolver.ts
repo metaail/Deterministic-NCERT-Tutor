@@ -8,13 +8,12 @@ export async function fastMathSolverStream(
 ) {
   const startTime = Date.now();
   
-  // Minimal prompt - avoid huge history for fast math
-  const finalPrompt = historyText + "\n\nAnswer the following math question directly and concisely without heavy introductions: " + query;
+  // Minimal prompt
+  const finalPrompt = historyText + "Answer the following math question directly and concisely without heavy introductions: " + query;
   
-  const MATH_PROMPT = "You are an expert Math/Science tutor. Output ONLY the direct mathematical answer. Do not add educational fluff, no motivational text. Use ONLY \\( ... \\) for inline math and \\[ ... \\] for block math. NEVER use the $ or $$ delimiters. ALWAYS answer accurately. DO NOT repeat the question back.";
+  const MATH_PROMPT = "You are an expert Math/Science tutor. Provide direct, pedantic, mathematical answers to simple questions. Do NOT require external context. Use ONLY \\( ... \\) for inline math and \\[ ... \\] for block math. ALWAYS answer accurately.";
 
-  // maxOutputTokens = 150, temperature = 0.0
-  const stream = await generateContentStream(finalPrompt, MATH_PROMPT, 2, 150, 0.0);
+  const stream = await generateContentStream(finalPrompt, MATH_PROMPT, 2, 300);
   const startGeminiTime = Date.now();
   
   return new ReadableStream({

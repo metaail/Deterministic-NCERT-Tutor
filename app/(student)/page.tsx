@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useStreamingChat } from '@/lib/chat/useStreamingChat';
 import { useConversationMemory } from '@/lib/chat/useConversationMemory';
 import { useReferences } from '@/lib/chat/useReferences';
@@ -11,7 +11,7 @@ import { ChapterNavigator } from './components/ChapterNavigator';
 import { PerformanceBadge } from './components/PerformanceBadge';
 import { MobileDrawer } from './components/MobileDrawer';
 import { getPublishedChapters } from '@/lib/chat/getPublishedChapters';
-import { Send, Menu, PanelRightClose, PanelRightOpen, Trash2, LibraryBig } from 'lucide-react';
+import { Send, Menu, PanelRightClose, PanelRightOpen, Trash2, LibraryBig, Mic } from 'lucide-react';
 
 export default function StudentChatPage() {
   const [subjectCode, setSubjectCode] = useState('041');
@@ -19,13 +19,61 @@ export default function StudentChatPage() {
   const [chapterKey, setChapterKey] = useState('');
   const [query, setQuery] = useState('');
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
   
   const [availableChapters, setAvailableChapters] = useState<any[]>([]);
   const [loadingChapters, setLoadingChapters] = useState(true);
 
+  const [isDictating, setIsDictating] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
   const { memoryMessages, updateMessages, clearMemory } = useConversationMemory();
   const { messages, setMessages, sendMessage, cancelStream, isLoading, error } = useStreamingChat();
   const { isOpen, setIsOpen, hasReferences, metadata } = useReferences(messages);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        
+        recognition.onstart = () => setIsDictating(true);
+        recognition.onend = () => setIsDictating(false);
+        recognition.onerror = (e: any) => {
+          console.error('Speech recognition error', e.error);
+          setIsDictating(false);
+        };
+        
+        recognition.onresult = (e: any) => {
+          let finalTranscript = '';
+          for (let i = e.resultIndex; i < e.results.length; ++i) {
+            if (e.results[i].isFinal) {
+              finalTranscript += e.results[i][0].transcript + ' ';
+            }
+          }
+          if (finalTranscript) {
+             setQuery(prev => prev + (prev.endsWith(' ') ? '' : ' ') + finalTranscript);
+          }
+        };
+
+        recognitionRef.current = recognition;
+      }
+    }
+  }, []);
+
+  const toggleDictation = () => {
+    if (!recognitionRef.current) {
+      alert("Voice input is not supported in this browser.");
+      return;
+    }
+    if (isDictating) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+    }
+  };
 
   useEffect(() => {
     if (memoryMessages && messages.length === 0 && !isLoading) {
@@ -109,6 +157,7 @@ export default function StudentChatPage() {
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
       <div className="flex-1 flex flex-col h-full bg-white relative">
         {/* Header */}
+        {!isFocusMode && (
          <header className="h-14 border-b border-gray-200 bg-white/80 backdrop-blur-md px-4 flex items-center justify-between shrink-0 z-10">
           <div className="flex items-center gap-2 sm:gap-3 w-full max-w-7xl mx-auto">
              <div className="hidden sm:block text-lg font-bold text-gray-900 mr-2">NEET/JEE Tutor</div>
@@ -158,6 +207,7 @@ export default function StudentChatPage() {
              )}
           </div>
         </header>
+        )}
 
         {/* Main Workspace */}
         <div className="flex-1 flex overflow-hidden">
@@ -167,13 +217,20 @@ export default function StudentChatPage() {
                isLoading={isLoading} 
                error={error} 
                onSuggestionSelect={handleSuggestionSelect}
+               isFocusMode={isFocusMode}
+               onToggleFocusMode={() => {
+                 setIsFocusMode(!isFocusMode);
+                 if (!isFocusMode) {
+                   setIsOpen(false);
+                 }
+               }}
              />
              
              {/* Sticky Input Area */}
              <div className="p-4 bg-gradient-to-t from-gray-50 via-gray-50/80 to-transparent pb-6 shrink-0">
                <div className="w-full max-w-4xl xl:max-w-5xl mx-auto relative rounded-2xl shadow-sm border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-400 transition-all">
                  <textarea 
-                   className="w-full bg-transparent px-4 py-4 pr-14 text-sm text-gray-800 focus:outline-none resize-none max-h-40 min-h-[56px]"
+                   className="w-full bg-transparent px-4 py-4 pr-24 text-sm text-gray-800 focus:outline-none resize-none max-h-40 min-h-[56px]"
                    placeholder="Ask about formulas, concepts, or PYQs..."
                    value={query}
                    onChange={(e) => {
@@ -191,17 +248,31 @@ export default function StudentChatPage() {
                    disabled={isLoading}
                    suppressHydrationWarning
                  />
-                 <button 
-                   className={`absolute right-2 bottom-2 p-2 rounded-xl transition-all ${
-                     isLoading || !query.trim() 
-                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                     : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
-                   }`}
-                   disabled={isLoading || !query.trim()}
-                   onClick={handleSend}
-                 >
-                   <Send size={16} />
-                 </button>
+                 <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                   <button
+                     className={`p-2 rounded-xl transition-all ${
+                       isDictating
+                       ? 'bg-red-50 text-red-500 shadow-sm animate-pulse'
+                       : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                     }`}
+                     onClick={toggleDictation}
+                     disabled={isLoading}
+                     title={isDictating ? "Stop dictating" : "Start Voice Input"}
+                   >
+                     <Mic size={16} />
+                   </button>
+                   <button 
+                     className={`p-2 rounded-xl transition-all ${
+                       isLoading || !query.trim() 
+                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                       : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
+                     }`}
+                     disabled={isLoading || !query.trim()}
+                     onClick={handleSend}
+                   >
+                     <Send size={16} />
+                   </button>
+                 </div>
                </div>
                <div className="text-center mt-2">
                  <span className="text-[11px] text-gray-400">AI can make mistakes. Verify critical concepts with NCERT.</span>

@@ -31,11 +31,9 @@ export async function POST(req: NextRequest) {
           const intent = detectIntent(request.query);
           
           if (intent === 'simple_math_query') {
-              let historyText = "";
-              if (request.history && request.history.length > 0) {
-                 const shortHistory = request.history.slice(-2);
-                 historyText = "Previous Conversation:\n" + shortHistory.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n") + "\n\n";
-              }
+              const historyText = request.history && request.history.length > 0 
+                ? "Previous Conversation:\n" + request.history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n") + "\n\n"
+                : "";
               const agentStream = await fastMathSolverStream(request.query, historyText, (metrics) => {
                   logMetrics("/api/chat", metrics);
               });
