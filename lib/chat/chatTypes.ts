@@ -8,7 +8,11 @@ export type ChatIntent =
   | 'example_query'
   | 'practice_generation'
   | 'simple_math_query'
+  | 'definition_query'
+  | 'yes_no_query'
   | 'pyq_query';
+
+export type ResponseMode = 'concise' | 'standard' | 'detailed';
 
 export interface ChatMessage {
   role: 'user' | 'model';
@@ -25,6 +29,7 @@ export interface ChatRequest {
 
 export interface ContextPayload {
   intent: ChatIntent;
+  responseMode: ResponseMode;
   textChunks: any[];
   structureIndex?: any;
 }

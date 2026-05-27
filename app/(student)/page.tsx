@@ -24,7 +24,7 @@ export default function StudentChatPage() {
   const [loadingChapters, setLoadingChapters] = useState(true);
 
   const { memoryMessages, updateMessages, clearMemory } = useConversationMemory();
-  const { messages, setMessages, sendMessage, isLoading, error } = useStreamingChat();
+  const { messages, setMessages, sendMessage, cancelStream, isLoading, error } = useStreamingChat();
   const { isOpen, setIsOpen, hasReferences, metadata } = useReferences(messages);
 
   useEffect(() => {
@@ -95,6 +95,7 @@ export default function StudentChatPage() {
   };
 
   const handleClear = () => {
+     cancelStream();
      clearMemory();
      setMessages([]);
   };

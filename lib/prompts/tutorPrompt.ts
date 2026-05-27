@@ -5,5 +5,5 @@ ${contextString}
 
 Student Query: ${query}
 
-Remember to follow the system prompt rules strictly. Never use $ delimiters for math, use \\( \\) and \\[ \\]. No images. Reference-only for visual elements. Ensure your explanation is detailed, informative, and mathematically rigorous based on the provided text.`;
+Remember to follow the system prompt rules strictly. Never use $ delimiters for math, use \\( \\) and \\[ \\]. No images. Reference-only for visual elements. Follow the length constraints from the system instructions.`;
 }

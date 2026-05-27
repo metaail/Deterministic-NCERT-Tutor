@@ -21,9 +21,10 @@ export function AnswerEvidence({ isOpen, onClose, metadata }: AnswerEvidenceProp
     <AnimatePresence>
       {isOpen && (
         <motion.div 
-          initial={{ width: 0, opacity: 0 }}
-          animate={{ width: 340, opacity: 1 }}
-          exit={{ width: 0, opacity: 0 }}
+          initial={{ width: 0, opacity: 0, x: 40 }}
+          animate={{ width: 340, opacity: 1, x: 0 }}
+          exit={{ width: 0, opacity: 0, x: 40 }}
+          transition={{ type: "spring", stiffness: 350, damping: 30 }}
           className="border-l border-gray-200 bg-gray-50 flex flex-col hidden lg:flex overflow-hidden shrink-0"
         >
           <div className="w-[340px] h-full flex flex-col">

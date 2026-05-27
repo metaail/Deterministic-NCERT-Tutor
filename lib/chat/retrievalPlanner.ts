@@ -1,9 +1,11 @@
 import { ChatRequest, ContextPayload, ChatIntent } from './chatTypes';
 import { executeHybridSearch } from '@/lib/vector/hybridSearch';
 import { adminDb } from '@/lib/firebase/admin';
+import { getResponseMode } from './intentRouter';
 
 export async function planRetrieval(request: ChatRequest, intent: ChatIntent): Promise<ContextPayload> {
   const { query, subjectCode, classLevel, chapterKey } = request;
+  const responseMode = getResponseMode(intent);
 
   // Start chapter lookup
   if (!adminDb) throw new Error("Database not initialized");
@@ -20,6 +22,7 @@ export async function planRetrieval(request: ChatRequest, intent: ChatIntent): P
     }
     return {
       intent,
+      responseMode,
       textChunks: [],
       structureIndex: indexDoc.exists ? indexDoc.data() : null
     };
@@ -49,6 +52,7 @@ export async function planRetrieval(request: ChatRequest, intent: ChatIntent): P
 
     return {
       intent,
+      responseMode,
       textChunks,
     };
   }

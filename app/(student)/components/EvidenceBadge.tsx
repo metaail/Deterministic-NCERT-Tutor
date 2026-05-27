@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, AlertCircle, FileText, CheckCircle2, FlaskConical, LayoutTemplate, PenTool } from 'lucide-react';
+import { BookOpen, AlertCircle, FileText, CheckCircle2, FlaskConical, LayoutTemplate, PenTool, Image as ImageIcon, History } from 'lucide-react';
 
 interface EvidenceBadgeProps {
   chunk: any;
@@ -30,6 +30,14 @@ export function EvidenceBadge({ chunk }: EvidenceBadgeProps) {
      label = "Summary";
      Icon = LayoutTemplate;
      colorClass = "bg-indigo-50 text-indigo-600 border-indigo-100";
+  } else if (chunk.figureRefs?.length > 0 || chunk.isFigureCaption || chunk.tableRefs?.length > 0) {
+     label = "Figure Reference";
+     Icon = ImageIcon;
+     colorClass = "bg-teal-50 text-teal-600 border-teal-100";
+  } else if (chunk.pyqRefs && chunk.pyqRefs.length > 0) {
+     label = "PYQ Related";
+     Icon = History;
+     colorClass = "bg-orange-50 text-orange-600 border-orange-100";
   }
 
   return (

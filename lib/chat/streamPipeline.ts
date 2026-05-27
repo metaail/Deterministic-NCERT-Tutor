@@ -18,9 +18,15 @@ export async function runTutorAgentStream(
   const contextString = buildContextString(payload);
   const prompt = buildTutorPrompt(request.query, contextString);
   
-  const historyText = request.history && request.history.length > 0 
-    ? "Previous Conversation:\n" + request.history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n") + "\n\n"
-    : "";
+  let historyText = "";
+  if (request.history && request.history.length > 0) {
+      if (payload.responseMode === 'concise') {
+         const shortHistory = request.history.slice(-2);
+         historyText = "Previous Conversation:\n" + shortHistory.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n") + "\n\n";
+      } else {
+         historyText = "Previous Conversation:\n" + request.history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n") + "\n\n";
+      }
+  }
 
   const finalPrompt = historyText + prompt;
 
@@ -30,12 +36,23 @@ export async function runTutorAgentStream(
       pyqPromise = searchPyq(request.query, request.subjectCode, request.classLevel, request.chapterKey);
   }
 
-  // Set Gemini max tokens based on intent
+  // Set Gemini parameters based on responseMode
   let maxOutputTokens = 500;
-  if (payload.intent === 'exercise_solution') maxOutputTokens = 800;
-  else if (payload.intent === 'structure_query') maxOutputTokens = 250;
+  let temperature = 0.2;
+  
+  if (payload.responseMode === 'concise') {
+    maxOutputTokens = 150;
+    // Lower temperature for highly concise, deterministic answers
+    temperature = 0.0;
+  } else if (payload.responseMode === 'standard') {
+    maxOutputTokens = 300;
+    temperature = 0.2;
+  } else if (payload.responseMode === 'detailed') {
+    maxOutputTokens = 800;
+    temperature = 0.3;
+  }
 
-  let stream = await generateContentStream(finalPrompt, SYSTEM_PROMPT, 2, maxOutputTokens);
+  let stream = await generateContentStream(finalPrompt, SYSTEM_PROMPT, 2, maxOutputTokens, temperature);
   const startGeminiTime = Date.now();
 
   return new ReadableStream({

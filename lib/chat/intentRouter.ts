@@ -35,9 +35,38 @@ export function detectIntent(query: string): ChatIntent {
     return 'example_query';
   }
 
+  if (/(what is|define|definition of|meaning of)/i.test(lowerQuery)) {
+    return 'definition_query';
+  }
+
+  if (/^(is|are|can|does|do|will|would|should|could)\b/i.test(lowerQuery)) {
+    return 'yes_no_query';
+  }
+
   if (/(generate|create|make).*(practice|questions|test)/i.test(lowerQuery)) {
     return 'practice_generation';
   }
 
   return 'concept_explanation';
+}
+
+export function getResponseMode(intent: ChatIntent): 'concise' | 'standard' | 'detailed' {
+  switch (intent) {
+    case 'simple_math_query':
+    case 'formula_reference':
+    case 'yes_no_query':
+    case 'structure_query':
+      return 'concise';
+    case 'definition_query':
+    case 'figure_reference':
+    case 'table_reference':
+    case 'example_query':
+      return 'standard';
+    case 'concept_explanation':
+    case 'exercise_solution':
+    case 'practice_generation':
+    case 'pyq_query':
+    default:
+      return 'detailed';
+  }
 }

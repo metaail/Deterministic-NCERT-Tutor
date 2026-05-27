@@ -56,7 +56,7 @@ async function main() {
              subjectCode: '041',
              classLevel: 'Class 11',
              chapterNumber: 2,
-             chapterTitle: 'Relations and Functions',
+             chapterTitle: 'relationsAndFunctions',
              chapterTitleShort: 'Rel & Func'
          },
          pdfPages: pdfPages,

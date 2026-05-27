@@ -29,13 +29,13 @@ Let us recall from our earlier classes that an ordered pair of elements
 taken from any two sets P and Q is a pair of elements written in small
 Fig 2.1
 Chapter 2
-RELATIONS AND FUNCTIONS
+relationsAndFunctions
 G. W. Leibnitz
 (1646–1716)
 Reprint 2026-27
 ==End of OCR for page 1==
 ==Start of OCR for page 2==
-RELATIONS AND FUNCTIONS 25
+relationsAndFunctions 25
 brackets and grouped together in a particular order, i.e., (p,q), p ∈ P and q ∈ Q . This
 leads to the following definition:
 Definition 1 Given two non-empty sets P and Q. The cartesian product P × Q is the

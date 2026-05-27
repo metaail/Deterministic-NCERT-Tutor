@@ -14,6 +14,16 @@ export function useStreamingChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const cancelStream = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsLoading(false);
+    }
+  }, []);
+
   const sendMessage = useCallback(async (
     query: string,
     subjectCode: string,
@@ -23,6 +33,14 @@ export function useStreamingChat() {
   ) => {
     if (!query.trim() || !chapterKey) return;
     
+    // Abort previous stream if one is active
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+    }
+    
+    const newController = new AbortController();
+    abortControllerRef.current = newController;
+
     const userMsg: ExtendedMessage = { role: 'user', content: query };
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
@@ -32,8 +50,10 @@ export function useStreamingChat() {
     const maxRetries = 3;
 
     while (attempt <= maxRetries) {
+      if (newController.signal.aborted) break;
+
       try {
-        const res = await fetch('/api/chat/stream', {
+        const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -42,8 +62,10 @@ export function useStreamingChat() {
             chapterKey,
             query: userMsg.content,
             history: history.slice(-5)
-          })
+          }),
+          signal: newController.signal
         });
+
 
         if (!res.ok) {
           if (res.status >= 500 && attempt < maxRetries) {
@@ -129,6 +151,11 @@ export function useStreamingChat() {
         }
         break; // Success, exit retry loop
       } catch (err: any) {
+        if (err.name === 'AbortError') {
+          console.log('Stream aborted');
+          break;
+        }
+
         const msg = String(err.message || '');
         const isNetworkOr500 = msg.includes('fetch') || 
                                msg.includes('network') || 
@@ -160,5 +187,5 @@ export function useStreamingChat() {
     }
   }, []);
 
-  return { messages, setMessages, sendMessage, isLoading, error };
+  return { messages, setMessages, sendMessage, cancelStream, isLoading, error };
 }

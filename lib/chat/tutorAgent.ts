@@ -21,7 +21,20 @@ export async function runTutorAgent(request: ChatRequest, payload: ContextPayloa
     // Start PYQ search concurrently
     const pyqPromise = searchPyq(request.query, request.subjectCode, request.classLevel, request.chapterKey);
     
-    let rawResponse = await generateContent(finalPrompt, SYSTEM_PROMPT);
+    let maxOutputTokens = 500;
+    let temperature = 0.2;
+    if (payload.responseMode === 'concise') {
+      maxOutputTokens = 150;
+      temperature = 0.0;
+    } else if (payload.responseMode === 'standard') {
+      maxOutputTokens = 300;
+      temperature = 0.2;
+    } else if (payload.responseMode === 'detailed') {
+      maxOutputTokens = 800;
+      temperature = 0.3;
+    }
+
+    let rawResponse = await generateContent(finalPrompt, SYSTEM_PROMPT, 2, maxOutputTokens, temperature);
     
     // Fallback logic for when context is insufficient
     const lowercaseRes = rawResponse.toLowerCase();

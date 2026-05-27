@@ -29,12 +29,22 @@ export function EvidenceCard({ chunk }: EvidenceCardProps) {
 
   // Derive "Why this was used" reason safely
   let rationale = "This NCERT section provides direct conceptual support for your query.";
-  if (chunk.isDefinition) rationale = "This NCERT section was used because it defines the core concept.";
-  if (chunk.isFormula || chunk.hasFormula) rationale = "This section contains the mathematical formulas needed to solve or explain the query.";
-  if (chunk.isSolvedExample) rationale = "This NCERT example demonstrates how to apply the concept.";
+  if (chunk.matchedKeywords && Array.isArray(chunk.matchedKeywords) && chunk.matchedKeywords.length > 0) {
+      rationale = `This NCERT section was used because it explains ${chunk.matchedKeywords.slice(0, 3).join(', ')}.`;
+  } else if (chunk.isDefinition) {
+      rationale = "This NCERT section was used because it defines the core concept.";
+  } else if (chunk.isFormula || chunk.hasFormula) {
+      rationale = "This section contains the mathematical formulas needed to solve or explain the query.";
+  } else if (chunk.isSolvedExample) {
+      rationale = "This NCERT example demonstrates how to apply the concept.";
+  } else if (chunk.isExercise) {
+      rationale = "This NCERT exercise question is highly relevant to your query.";
+  } else if (chunk.isSummaryPoint) {
+      rationale = "This summary point provides a concise overview of the relevant concepts.";
+  }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-3.5 shadow-sm hover:shadow-md transition-all text-left group flex flex-col gap-2">
+    <div className="bg-white border border-gray-200 rounded-xl p-3.5 shadow-sm hover:shadow-md transition-all text-left flex flex-col gap-2">
        <div className="flex items-start justify-between">
          <div className="flex flex-col items-start gap-1.5">
            <EvidenceBadge chunk={chunk} />
@@ -76,9 +86,9 @@ export function EvidenceCard({ chunk }: EvidenceCardProps) {
          </div>
        </div>
 
-       {((chunk.figureRefs && chunk.figureRefs.length > 0) || chunk.isFigureCaption) && (
+       {((chunk.figureRefs && chunk.figureRefs.length > 0) || chunk.isFigureCaption || (chunk.tableRefs && chunk.tableRefs.length > 0)) && (
           <div className="mt-1 flex items-center gap-1.5 text-[10px] text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">
-             <span>Visual reference available in NCERT textbook.</span>
+             <span>Visual reference available in NCERT textbook. Please refer to your textbook/PDF.</span>
           </div>
        )}
     </div>
