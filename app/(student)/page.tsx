@@ -241,9 +241,9 @@ export default function StudentChatPage() {
              
              {/* Sticky Input Area */}
              <div className="p-4 bg-gradient-to-t from-gray-50 via-gray-50/80 to-transparent pb-6 shrink-0">
-               <div className="w-full max-w-4xl xl:max-w-5xl mx-auto relative rounded-2xl shadow-sm border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-400 transition-all">
+               <div className="w-full max-w-4xl xl:max-w-5xl mx-auto relative rounded-2xl shadow-sm gemini-border transition-all">
                  <textarea 
-                   className="w-full bg-transparent px-4 py-4 pr-24 text-sm text-gray-800 focus:outline-none resize-none max-h-40 min-h-[56px]"
+                   className="w-full bg-transparent px-4 py-4 pr-24 text-sm text-gray-800 focus:outline-none resize-none max-h-40 min-h-[56px] relative z-10"
                    placeholder="Ask about formulas, concepts, or PYQs..."
                    value={query}
                    onChange={(e) => {
@@ -261,7 +261,7 @@ export default function StudentChatPage() {
                    disabled={isLoading}
                    suppressHydrationWarning
                  />
-                 <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                 <div className="absolute right-2 bottom-2 flex items-center gap-1 z-10">
                    <button
                      className={`p-2 rounded-xl transition-all ${
                        isDictating
