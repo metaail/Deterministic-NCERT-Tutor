@@ -6,6 +6,9 @@ export type ExtendedMessage = ChatMessage & {
     textChunks?: any[];
     intent?: string;
     pyqs?: any[];
+    outOfScope?: boolean;
+    suggestedChapter?: string;
+    relatedQuestions?: string[];
   }
 };
 
@@ -29,7 +32,8 @@ export function useStreamingChat() {
     subjectCode: string,
     classLevel: string,
     chapterKey: string,
-    history: ChatMessage[]
+    history: ChatMessage[],
+    forceGeneral?: boolean
   ) => {
     if (!query.trim() || !chapterKey) return;
     
@@ -61,7 +65,8 @@ export function useStreamingChat() {
             classLevel,
             chapterKey,
             query: userMsg.content,
-            history: history.slice(-5)
+            history: history.slice(-5),
+            forceGeneral
           }),
           signal: newController.signal
         });

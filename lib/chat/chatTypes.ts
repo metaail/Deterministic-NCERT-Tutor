@@ -25,6 +25,7 @@ export interface ChatRequest {
   chapterKey: string;
   query: string;
   history?: ChatMessage[];
+  forceGeneral?: boolean;
 }
 
 export interface ContextPayload {

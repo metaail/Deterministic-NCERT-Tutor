@@ -148,6 +148,18 @@ export default function StudentChatPage() {
      setMessages([]);
   };
 
+  const handleForceGeneral = () => {
+    if (!chapterKey) return;
+    // Find the last user message
+    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+    if (lastUserMsg) {
+      sendMessage(lastUserMsg.content, subjectCode, classLevel, chapterKey, messages, true);
+      if (!isOpen && hasReferences) {
+          setIsOpen(true);
+      }
+    }
+  };
+
   const filteredChapters = availableChapters.filter(c => 
     (c.subjectCode === subjectCode || (subjectCode === '041' && c.subject === 'Maths')) &&
     c.classLevel === classLevel
@@ -217,6 +229,7 @@ export default function StudentChatPage() {
                isLoading={isLoading} 
                error={error} 
                onSuggestionSelect={handleSuggestionSelect}
+               onForceGeneral={handleForceGeneral}
                isFocusMode={isFocusMode}
                onToggleFocusMode={() => {
                  setIsFocusMode(!isFocusMode);

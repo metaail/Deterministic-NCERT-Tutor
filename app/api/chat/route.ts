@@ -3,6 +3,7 @@ import { detectIntent } from '@/lib/chat/intentRouter';
 import { planRetrieval } from '@/lib/chat/retrievalPlanner';
 import { runTutorAgentStream } from '@/lib/chat/streamPipeline';
 import { fastMathSolverStream } from '@/lib/chat/fastMathSolver';
+import { runGeneralDoubtStream } from '@/lib/chat/generalDoubtMode';
 import { ChatRequest } from '@/lib/chat/chatTypes';
 import { logMetrics } from '@/lib/chat/retrievalMetrics';
 
@@ -18,7 +19,8 @@ export async function POST(req: NextRequest) {
       classLevel: body.classLevel,
       chapterKey: body.chapterKey,
       query: body.query,
-      history: body.history || []
+      history: body.history || [],
+      forceGeneral: body.forceGeneral
     };
 
     if (!request.subjectCode || !request.classLevel || !request.chapterKey || !request.query) {
@@ -28,6 +30,21 @@ export async function POST(req: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          // Check for General Doubt Mode bypass
+          if (request.forceGeneral) {
+              const agentStream = await runGeneralDoubtStream(request, (metrics) => {
+                  logMetrics("/api/chat", metrics);
+              });
+              const reader = agentStream.getReader();
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                controller.enqueue(value);
+              }
+              controller.close();
+              return;
+          }
+
           const intent = detectIntent(request.query);
           
           if (intent === 'simple_math_query') {
@@ -59,7 +76,14 @@ export async function POST(req: NextRequest) {
           const guardLatency = Date.now() - startGuard;
 
           if (!grounding.isGrounded) {
-             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content: grounding.reason })}\n\n`));
+             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ 
+                content: grounding.reason, 
+                metadata: { 
+                   outOfScope: true, 
+                   suggestedChapter: grounding.suggestedChapter, 
+                   relatedQuestions: grounding.relatedQuestions 
+                } 
+             })}\n\n`));
              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ done: true })}\n\n`));
              controller.close();
              return;
@@ -97,3 +121,4 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ error: error.message || "Internal server error" }), { status: 500 });
   }
 }
+

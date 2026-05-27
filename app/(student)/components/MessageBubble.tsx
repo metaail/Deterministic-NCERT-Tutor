@@ -2,23 +2,28 @@ import React from 'react';
 import { ExtendedMessage } from '../../../lib/chat/useStreamingChat';
 import { StreamingRenderer } from './StreamingRenderer';
 import { BookOpen } from 'lucide-react';
+import { OutOfScopeCard } from './OutOfScopeCard';
 
 interface MessageBubbleProps {
   message: ExtendedMessage;
   isStreaming?: boolean;
+  onForceGeneral?: () => void;
+  onSuggestionSelect?: (query: string) => void;
 }
 
-export function MessageBubble({ message, isStreaming = false }: MessageBubbleProps) {
+export function MessageBubble({ message, isStreaming = false, onForceGeneral, onSuggestionSelect }: MessageBubbleProps) {
   const isUser = message.role === 'user';
+  
+  const isOutOfScope = message.metadata?.outOfScope === true;
 
   return (
     <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} group relative`}>
       <div className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-4 ${
         isUser 
           ? 'bg-indigo-600 text-white rounded-br-sm shadow-sm' 
-          : 'bg-white border border-gray-200/60 shadow-sm rounded-bl-sm text-gray-800'
+          : isOutOfScope ? 'bg-white rounded-bl-sm' : 'bg-white border border-gray-200/60 shadow-sm rounded-bl-sm text-gray-800'
       }`}>
-        {!isUser && (
+        {!isUser && !isOutOfScope && (
            <div className="flex items-center gap-2 mb-2 text-indigo-600">
              <div className="w-6 h-6 rounded-md bg-indigo-50 flex items-center justify-center">
                <BookOpen size={14} className="text-indigo-600" />
@@ -29,6 +34,8 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
         
         {isUser ? (
           <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{message.content}</p>
+        ) : isOutOfScope ? (
+          <OutOfScopeCard message={message} onForceGeneral={onForceGeneral} onSuggestionSelect={onSuggestionSelect} />
         ) : (
           <StreamingRenderer content={message.content} isStreaming={isStreaming} />
         )}

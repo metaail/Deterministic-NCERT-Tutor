@@ -11,11 +11,12 @@ interface ChatWindowProps {
   isLoading: boolean;
   error: string;
   onSuggestionSelect?: (query: string) => void;
+  onForceGeneral?: () => void;
   isFocusMode?: boolean;
   onToggleFocusMode?: () => void;
 }
 
-export function ChatWindow({ messages, isLoading, error, onSuggestionSelect, isFocusMode, onToggleFocusMode }: ChatWindowProps) {
+export function ChatWindow({ messages, isLoading, error, onSuggestionSelect, onForceGeneral, isFocusMode, onToggleFocusMode }: ChatWindowProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -61,6 +62,8 @@ export function ChatWindow({ messages, isLoading, error, onSuggestionSelect, isF
             key={idx} 
             message={m} 
             isStreaming={isLoading && idx === messages.length - 1 && m.role === 'model'} 
+            onForceGeneral={onForceGeneral}
+            onSuggestionSelect={onSuggestionSelect}
           />
         ))}
 

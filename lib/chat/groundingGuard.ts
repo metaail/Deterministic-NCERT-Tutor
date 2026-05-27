@@ -1,15 +1,18 @@
 import { ContextPayload } from './chatTypes';
+import { suggestChapterForQuery } from './topicSuggestion';
+import { getRelatedQuestionsFromContext } from './outOfScopeHandler';
 
 export function evaluateGroundingConfidence(
   query: string,
   contextPayload: ContextPayload,
   chapterKey: string,
   subjectCode: string
-): { isGrounded: boolean; reason?: string } {
+): { isGrounded: boolean; reason?: string; suggestedChapter?: string | null; relatedQuestions?: string[] } {
   const { textChunks } = contextPayload;
   
   if (!textChunks || textChunks.length === 0) {
-    return { isGrounded: false, reason: "No relevant textbook context found." };
+    const suggestedChapter = suggestChapterForQuery(query);
+    return { isGrounded: false, reason: "No relevant textbook context found.", suggestedChapter };
   }
 
   // Filter chunks to see if we have valid ones covering the selected chapter
@@ -21,22 +24,17 @@ export function evaluateGroundingConfidence(
           const chunkText = chunk.text.toLowerCase();
           const hasOverlap = queryWords.some(w => chunkText.includes(w));
           if (!hasOverlap) {
-             console.log(`[GroundingGuard] Rejected text: No keyword overlap with query.`);
              return false;
           }
       }
       
-      // The properties are flattened from metadata in retrievalPlanner:
       if (chunk.chapterKey !== chapterKey) {
-          console.log(`[GroundingGuard] Rejected text: chapterKey ${chunk.chapterKey} != ${chapterKey}`);
           return false;
       }
       if (chunk.subjectCode !== subjectCode) {
-          console.log(`[GroundingGuard] Rejected text: subjectCode ${chunk.subjectCode} != ${subjectCode}`);
           return false;
       }
       if (chunk.status !== 'published') {
-          console.log(`[GroundingGuard] Rejected text: status ${chunk.status} != published`);
           return false;
       }
       
@@ -45,9 +43,15 @@ export function evaluateGroundingConfidence(
 
   if (validChunks.length === 0) {
       console.log(`[GroundingGuard] No valid chunks remaining out of ${textChunks.length}`);
-      return { isGrounded: false, reason: "This concept is not available in the currently selected NCERT chapter. Please switch to the relevant chapter or ask a question from the selected chapter." };
+      const suggestedChapter = suggestChapterForQuery(query);
+      const relatedQuestions = getRelatedQuestionsFromContext(contextPayload);
+      return { 
+        isGrounded: false, 
+        reason: "This concept is not strongly supported by the currently selected NCERT chapter.",
+        suggestedChapter,
+        relatedQuestions
+      };
   }
 
-  
   return { isGrounded: true };
 }
