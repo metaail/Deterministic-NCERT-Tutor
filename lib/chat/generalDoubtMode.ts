@@ -21,7 +21,7 @@ export async function runGeneralDoubtStream(
         let isFirst = true;
         for await (const chunk of stream) {
           if (firstTokenTime === 0) firstTokenTime = Date.now();
-          const text = chunk.text;
+          const text = chunk.text || "";
           tokenCount += text.length; // rough estimate
           
           if (isFirst) {

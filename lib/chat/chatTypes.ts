@@ -40,3 +40,12 @@ export interface VerificationResult {
   reason?: string;
   sanitizedResponse?: string;
 }
+
+export interface StreamMetrics {
+  retrievalLatency: number;
+  geminiLatency: number;
+  verifierLatency: number;
+  totalLatency: number;
+  timeToFirstToken: number;
+  tokensPerSecond: number;
+}
