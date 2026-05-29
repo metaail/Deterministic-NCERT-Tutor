@@ -11,7 +11,7 @@ export function detectIntent(query: string): ChatIntent {
     return 'simple_math_query';
   }
 
-  if (/how many (figures|tables|exercises)|list (exercises|examples|summary)|show summary/i.test(lowerQuery)) {
+  if (/how many (figures|tables|exercises|examples)|list (exercises|examples|summary)|show summary/i.test(lowerQuery)) {
     return 'structure_query';
   }
   
