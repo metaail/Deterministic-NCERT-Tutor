@@ -23,7 +23,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     <div className="prose prose-sm max-w-none text-gray-800">
       <ReactMarkdown 
         remarkPlugins={[remarkMath]} 
-        rehypePlugins={[rehypeKatex]}
+        rehypePlugins={[[rehypeKatex, { strict: false }]]}
         components={{
            p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />
         }}
