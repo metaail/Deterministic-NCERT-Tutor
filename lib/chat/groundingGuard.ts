@@ -8,8 +8,12 @@ export function evaluateGroundingConfidence(
   chapterKey: string,
   subjectCode: string
 ): { isGrounded: boolean; reason?: string; suggestedChapter?: string | null; relatedQuestions?: string[] } {
-  const { textChunks } = contextPayload;
+  const { textChunks, intent, structureIndex } = contextPayload;
   
+  if (intent === 'structure_query' && structureIndex) {
+      return { isGrounded: true };
+  }
+
   if (!textChunks || textChunks.length === 0) {
     const suggestedChapter = suggestChapterForQuery(query);
     return { isGrounded: false, reason: "No relevant textbook context found.", suggestedChapter };
@@ -24,6 +28,14 @@ export function evaluateGroundingConfidence(
           const chunkText = chunk.text.toLowerCase();
           const hasOverlap = queryWords.some(w => chunkText.includes(w));
           if (!hasOverlap) {
+             console.log(`[GroundingGuard] Rejected chunk ${chunk.chunkId} due to lack of word overlap.`);
+             return false;
+          }
+      } else if (queryWords.length > 0 && !chunk.text && chunk.textPreview) {
+          const chunkText = chunk.textPreview.toLowerCase();
+          const hasOverlap = queryWords.some(w => chunkText.includes(w));
+          if (!hasOverlap) {
+             console.log(`[GroundingGuard] Rejected chunk ${chunk.chunkId} due to lack of word overlap in textPreview.`);
              return false;
           }
       }

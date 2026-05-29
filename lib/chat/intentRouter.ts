@@ -55,8 +55,8 @@ export function getResponseMode(intent: ChatIntent): 'concise' | 'standard' | 'd
     case 'simple_math_query':
     case 'formula_reference':
     case 'yes_no_query':
-    case 'structure_query':
       return 'concise';
+    case 'structure_query':
     case 'definition_query':
     case 'figure_reference':
     case 'table_reference':
