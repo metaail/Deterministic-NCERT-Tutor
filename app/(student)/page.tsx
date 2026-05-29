@@ -17,6 +17,7 @@ export default function StudentChatPage() {
   const [subjectCode, setSubjectCode] = useState('041');
   const [classLevel, setClassLevel] = useState('Class 11');
   const [chapterKey, setChapterKey] = useState('');
+  const [isGeneralMode, setIsGeneralMode] = useState(false);
   const [query, setQuery] = useState('');
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -125,19 +126,19 @@ export default function StudentChatPage() {
   }, [subjectCode, classLevel, availableChapters]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSend = () => {
-    if (!query.trim() || !chapterKey) return;
+    if (!query.trim() || (!chapterKey && !isGeneralMode)) return;
     const currentQuery = query;
     setQuery('');
-    sendMessage(currentQuery, subjectCode, classLevel, chapterKey, messages);
-    if (!isOpen && hasReferences) {
+    sendMessage(currentQuery, subjectCode, classLevel, chapterKey || 'general', messages, isGeneralMode);
+    if (!isOpen && hasReferences && !isGeneralMode) {
         setIsOpen(true);
     }
   };
 
   const handleSuggestionSelect = (suggestion: string) => {
-    if (!chapterKey) return;
-    sendMessage(suggestion, subjectCode, classLevel, chapterKey, messages);
-    if (!isOpen && hasReferences) {
+    if (!chapterKey && !isGeneralMode) return;
+    sendMessage(suggestion, subjectCode, classLevel, chapterKey || 'general', messages, isGeneralMode);
+    if (!isOpen && hasReferences && !isGeneralMode) {
         setIsOpen(true);
     }
   };
@@ -173,22 +174,51 @@ export default function StudentChatPage() {
          <header className="h-14 border-b border-gray-200 bg-white/80 backdrop-blur-md px-4 flex items-center justify-between shrink-0 z-10">
           <div className="flex items-center gap-2 sm:gap-3 w-full max-w-7xl mx-auto">
              <div className="hidden sm:block text-lg font-bold text-gray-900 mr-2">NEET/JEE Tutor</div>
-             <SubjectSwitcher subjectCode={subjectCode} onChange={setSubjectCode} />
-             <select 
-                className="bg-gray-100/50 hover:bg-gray-100 border border-gray-200 text-sm font-medium text-gray-700 py-1.5 px-2 sm:px-3 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none cursor-pointer"
-                value={classLevel} 
-                onChange={e => setClassLevel(e.target.value)} 
-                suppressHydrationWarning
-              >
-                <option value="Class 11">Class 11</option>
-                <option value="Class 12">Class 12</option>
-              </select>
-             <ChapterNavigator 
-               chapters={filteredChapters} 
-               chapterKey={chapterKey} 
-               onChange={setChapterKey} 
-               isLoading={loadingChapters} 
-             />
+             
+             {/* Mode Toggle */}
+             <div className="flex items-center bg-gray-100/80 p-0.5 rounded-lg border border-gray-200 mr-2 shrink-0">
+               <button 
+                 onClick={() => setIsGeneralMode(false)}
+                 className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                   !isGeneralMode 
+                   ? 'bg-white text-gray-900 shadow-sm' 
+                   : 'text-gray-500 hover:text-gray-700'
+                 }`}
+               >
+                 Chapter Focus
+               </button>
+               <button 
+                 onClick={() => setIsGeneralMode(true)}
+                 className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                   isGeneralMode 
+                   ? 'bg-white text-gray-900 shadow-sm' 
+                   : 'text-gray-500 hover:text-gray-700'
+                 }`}
+               >
+                 General Doubt
+               </button>
+             </div>
+
+             {!isGeneralMode && (
+               <>
+                 <SubjectSwitcher subjectCode={subjectCode} onChange={setSubjectCode} />
+                 <select 
+                    className="bg-gray-100/50 hover:bg-gray-100 border border-gray-200 text-sm font-medium text-gray-700 py-1.5 px-2 sm:px-3 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none cursor-pointer shrink-0"
+                    value={classLevel} 
+                    onChange={e => setClassLevel(e.target.value)} 
+                    suppressHydrationWarning
+                  >
+                    <option value="Class 11">Class 11</option>
+                    <option value="Class 12">Class 12</option>
+                  </select>
+                 <ChapterNavigator 
+                   chapters={filteredChapters} 
+                   chapterKey={chapterKey} 
+                   onChange={setChapterKey} 
+                   isLoading={loadingChapters} 
+                 />
+               </>
+             )}
              
              {hasReferences && <PerformanceBadge />}
 

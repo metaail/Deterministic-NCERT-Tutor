@@ -9,9 +9,7 @@ export async function runGeneralDoubtStream(
     ? "Previous Conversation:\n" + request.history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n") + "\n\n"
     : "";
 
-  const modifiedPrompt = "Please start your response exactly with: \"### General Doubt Answer\\n*This answer is not grounded in the selected NCERT chapter.*\\n\\n\" followed by your answer to: " + request.query;
-
-  const stream = await generateFallbackContentStream(modifiedPrompt, historyText);
+  const stream = await generateFallbackContentStream(request.query, historyText);
 
   const startTime = Date.now();
   let firstTokenTime = 0;
@@ -20,14 +18,22 @@ export async function runGeneralDoubtStream(
   return new ReadableStream({
     async start(controller) {
       try {
+        let isFirst = true;
         for await (const chunk of stream) {
           if (firstTokenTime === 0) firstTokenTime = Date.now();
           const text = chunk.text;
           tokenCount += text.length; // rough estimate
           
-          controller.enqueue(
-            new TextEncoder().encode(`data: ${JSON.stringify({ content: text })}\n\n`)
-          );
+          if (isFirst) {
+            controller.enqueue(
+              new TextEncoder().encode(`data: ${JSON.stringify({ content: text, metadata: { isGeneralDoubt: true } })}\n\n`)
+            );
+            isFirst = false;
+          } else {
+            controller.enqueue(
+              new TextEncoder().encode(`data: ${JSON.stringify({ content: text })}\n\n`)
+            );
+          }
         }
 
         const endTime = Date.now();

@@ -7,6 +7,7 @@ export type ExtendedMessage = ChatMessage & {
     intent?: string;
     pyqs?: any[];
     outOfScope?: boolean;
+    isGeneralDoubt?: boolean;
     suggestedChapter?: string;
     relatedQuestions?: string[];
   }
