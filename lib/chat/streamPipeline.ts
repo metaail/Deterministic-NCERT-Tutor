@@ -25,7 +25,7 @@ export async function runTutorAgentStream(
   const finalPrompt = historyText + prompt;
 
   // Start PYQ search concurrently, ONLY if pyq_query
-  let pyqPromise: Promise<any[]> | null = null;
+  let pyqPromise: Promise<{isGrounded: boolean, pyqs: any[]}> | null = null;
   if (payload.intent === 'pyq_query') {
       pyqPromise = searchPyq(request.query, request.subjectCode, request.classLevel, request.chapterKey);
   }
@@ -97,10 +97,11 @@ export async function runTutorAgentStream(
         if (pyqPromise) {
           let pyqs: any[] = [];
           try {
-             pyqs = await Promise.race([
+             const pyqResult = await Promise.race([
                 pyqPromise,
-                new Promise<any[]>((_, reject) => setTimeout(() => reject(new Error('PYQ timeout')), 3000))
+                new Promise<{isGrounded: boolean, pyqs: any[]}>((_, reject) => setTimeout(() => reject(new Error('PYQ timeout')), 3000))
              ]);
+             pyqs = pyqResult.pyqs;
           } catch (e) {
              console.warn("PYQ matching skipped due to timeout:", e);
              pyqs = [];

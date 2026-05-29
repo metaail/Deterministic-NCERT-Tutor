@@ -270,7 +270,7 @@ export default function StudentChatPage() {
              />
              
              {/* Sticky Input Area */}
-             <div className="p-4 bg-gradient-to-t from-gray-50 via-gray-50/80 to-transparent pb-6 shrink-0">
+             <div className="p-4 bg-white/90 backdrop-blur-sm border-t border-gray-100 z-20 shrink-0 relative pb-6">
                <div className="w-full max-w-4xl xl:max-w-5xl mx-auto relative rounded-2xl shadow-sm gemini-border transition-all">
                  <textarea 
                    className="w-full bg-transparent px-4 py-4 pr-24 text-sm text-gray-800 focus:outline-none resize-none max-h-40 min-h-[56px] relative z-10"
