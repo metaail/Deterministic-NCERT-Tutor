@@ -91,6 +91,11 @@ export function useStreamingChat() {
         if (reader) {
           let isFirstData = true;
           let buffer = '';
+          
+          let lastUpdateTime = Date.now();
+          let queuedMsg: ExtendedMessage | null = null;
+          let isDone = false;
+
           while (true) {
             let value, done;
             try {
@@ -102,56 +107,71 @@ export function useStreamingChat() {
             }
 
             if (done) {
-               setIsLoading(false);
-               break;
+               isDone = true;
             }
 
-            if (isFirstData) {
+            if (isFirstData && !done) {
               setMessages(prev => [...prev, incomingMsg]);
               isFirstData = false;
             }
 
-            buffer += decoder.decode(value, { stream: true });
-            const parts = buffer.split('\n\n');
-            buffer = parts.pop() || '';
+            if (!done) {
+               buffer += decoder.decode(value, { stream: true });
+               const parts = buffer.split('\n\n');
+               buffer = parts.pop() || '';
 
-            for (const part of parts) {
-              if (part.startsWith('data: ')) {
-                try {
-                  const dataObj = JSON.parse(part.slice(6));
-                  if (dataObj.error) {
-                    if ((dataObj.status && dataObj.status >= 500) || String(dataObj.error).includes('500')) {
-                      throw new Error(`Network-related stream error: ${dataObj.error}`);
-                    }
-                    throw new Error(dataObj.error);
-                  }
-                  
-                  let updated = false;
-                  if (dataObj.content) {
-                    incomingMsg.content += dataObj.content;
-                    updated = true;
-                  }
-                  
-                  if (dataObj.metadata) {
-                    incomingMsg.metadata = {
-                      ...incomingMsg.metadata,
-                      ...dataObj.metadata
-                    };
-                    updated = true;
-                  }
-                  
-                  if (updated) {
-                    setMessages(prev => {
-                      const newArr = [...prev];
-                      newArr[newArr.length - 1] = { ...incomingMsg };
-                      return newArr;
-                    });
-                  }
-                } catch(e) {
-                  if (e instanceof Error && e.message.includes('Network-related')) throw e;
-                  console.warn('JSON parse error from stream chunk', e);
-                }
-              }
+               for (const part of parts) {
+                 if (part.startsWith('data: ')) {
+                   try {
+                     const dataObj = JSON.parse(part.slice(6));
+                     if (dataObj.error) {
+                       if ((dataObj.status && dataObj.status >= 500) || String(dataObj.error).includes('500')) {
+                         throw new Error(`Network-related stream error: ${dataObj.error}`);
+                       }
+                       throw new Error(dataObj.error);
+                     }
+                     
+                     let updated = false;
+                     if (dataObj.content) {
+                       incomingMsg.content += dataObj.content;
+                       updated = true;
+                     }
+                     
+                     if (dataObj.metadata) {
+                       incomingMsg.metadata = {
+                         ...incomingMsg.metadata,
+                         ...dataObj.metadata
+                       };
+                       updated = true;
+                     }
+                     
+                     if (updated) {
+                         queuedMsg = { ...incomingMsg };
+                     }
+                   } catch(e) {
+                     if (e instanceof Error && e.message.includes('Network-related')) throw e;
+                     console.warn('JSON parse error from stream chunk', e);
+                   }
+                 }
+               }
+            }
+
+            if (isDone || (queuedMsg && Date.now() - lastUpdateTime > 50)) {
+               if (queuedMsg) {
+                   const finalMsg = queuedMsg; // Capture reference
+                   setMessages(prev => {
+                     const newArr = [...prev];
+                     newArr[newArr.length - 1] = finalMsg;
+                     return newArr;
+                   });
+                   queuedMsg = null;
+                   lastUpdateTime = Date.now();
+               }
+            }
+            
+            if (isDone) {
+               setIsLoading(false);
+               break;
             }
           }
         }

@@ -28,12 +28,19 @@ export class StreamVerifier {
        outputText = outputText.replace(/!\[.*?\]\(.*?\)/g, '[IMAGE REMOVED]');
     }
     
-    // Fix math delimiters $$ -> \[ or \]
-    outputText = outputText.replace(/\$\$/g, () => this.buffer.split('$$').length % 2 === 0 ? '\\[' : '\\]');
+    // Convert math delimiters $$ -> \[ or \] 
+    // We only process outputText (the chunk) but we maintain state of how many $$ we've seen if needed.
+    // However, it's safer to just replace all $$ in the chunk securely or do nothing and let KaTeX handle it.
+    // Many Markdown math plugins handle $$ natively. We will preserve it or replace with \[ \] safely.
+    let dollarCount = (this.buffer.slice(0, -chunk.length).match(/\$\$/g) || []).length;
+    outputText = outputText.replace(/\$\$/g, () => {
+        dollarCount++;
+        return dollarCount % 2 !== 0 ? '\\[' : '\\]';
+    });
     
-    // If it's a standalone $ not preceded by \, change it to \( ... \)
-    // Simple streaming replacement for single $ can be tricky, but we'll adapt slightly
-    outputText = outputText.replace(/(^|[^\\])\$([^\$]+?)\$/g, '$1\\($2\\)');
+    // For single $, let it be handled by KaTeX or replace it cautiously
+    // React-markdown remark-math handles $ usually, so we don't strictly need to force convert $ to \( \)
+    // outputText = outputText.replace(/(^|[^\\])\$([^\$]+?)\$/g, '$1\\($2\\)');
 
     return { text: outputText };
   }
