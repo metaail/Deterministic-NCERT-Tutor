@@ -43,6 +43,29 @@ export function EvidenceCard({ chunk }: EvidenceCardProps) {
       rationale = "This summary point provides a concise overview of the relevant concepts.";
   }
 
+  const renderHighlightedContent = () => {
+    if (!chunk.matchedKeywords || !Array.isArray(chunk.matchedKeywords) || chunk.matchedKeywords.length === 0) {
+      return <>&quot;{contentStr}&quot;</>;
+    }
+
+    const keywords = [...chunk.matchedKeywords].sort((a, b) => b.length - a.length);
+    const escapedKeywords = keywords.map(kw => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const regex = new RegExp(`(${escapedKeywords.join('|')})`, 'gi');
+
+    const parts = contentStr.split(regex);
+    
+    return (
+      <>&quot;
+        {parts.map((part, i) => {
+          if (i % 2 === 1) {
+            return <mark key={i} className="bg-amber-200 text-amber-900 font-medium px-0.5 rounded">{part}</mark>;
+          }
+          return part;
+        })}
+      &quot;</>
+    );
+  };
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-3.5 shadow-sm hover:shadow-md transition-all text-left flex flex-col gap-2">
        <div className="flex items-start justify-between">
@@ -82,7 +105,7 @@ export function EvidenceCard({ chunk }: EvidenceCardProps) {
 
        <div className="relative mt-1">
          <div className={`text-[11.5px] text-gray-700 leading-relaxed font-serif bg-gray-50 p-2.5 rounded-lg border border-gray-100 ${isExpanded ? '' : 'line-clamp-3'}`}>
-           &quot;{contentStr}&quot;
+           {renderHighlightedContent()}
          </div>
        </div>
 
