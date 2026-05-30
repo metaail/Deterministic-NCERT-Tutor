@@ -41,12 +41,15 @@ export function evaluateGroundingConfidence(
       }
       
       if (chunk.chapterKey !== chapterKey) {
+          console.log(`[GroundingGuard] Rejected chunk ${chunk.chunkId} due to chapterKey mismatch. Expected ${chapterKey}, got ${chunk.chapterKey}`);
           return false;
       }
       if (chunk.subjectCode !== subjectCode) {
+          console.log(`[GroundingGuard] Rejected chunk ${chunk.chunkId} due to subjectCode mismatch.`);
           return false;
       }
       if (chunk.status !== 'published') {
+          console.log(`[GroundingGuard] Rejected chunk ${chunk.chunkId} due to status. Expected published, got ${chunk.status}`);
           return false;
       }
       

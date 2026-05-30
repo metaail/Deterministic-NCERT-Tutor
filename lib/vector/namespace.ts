@@ -1,1 +1,3 @@
-export function getNamespace(c?: string, s?: string) { return "default"; }
+export function getNamespace(key: string) {
+  return key;
+}

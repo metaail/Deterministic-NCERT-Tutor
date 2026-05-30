@@ -1,4 +1,7 @@
-export function getGeminiUsage() { 
-  return { isNearingLimit: false, limit: 1500, requests: 0, totalRequests: 0, totalTokens: 0, limitResetDate: new Date() }; 
+export function getGeminiUsage() {
+  return {
+    requests: 0,
+    limit: 1500,
+    isNearingLimit: false,
+  };
 }
-export async function incrementGeminiUsage() {}

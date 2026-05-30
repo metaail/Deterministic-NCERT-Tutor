@@ -1,2 +1,3 @@
-export async function runPyqIngestion() {}
-export async function runPyqPipeline(ctx: any) { return { paperId: 'id', metadata: { totalQuestions: 0 }}; }
+export async function runPyqPipeline(context: any) {
+  return { success: true };
+}

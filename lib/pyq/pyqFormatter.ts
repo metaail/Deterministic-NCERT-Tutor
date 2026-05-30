@@ -1,1 +1,1 @@
-export function formatPyqContext(a?: any) { return ""; }
+export function formatPyqContext(pyqs: any[]) { return ""; }

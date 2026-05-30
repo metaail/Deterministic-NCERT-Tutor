@@ -9,8 +9,7 @@ export async function planRetrieval(request: ChatRequest, intent: ChatIntent): P
 
   // Start chapter lookup
   if (!adminDb) throw new Error("Database not initialized");
-  const chapterDocPromise = adminDb.collection('chapters').doc(chapterKey).get();
-
+  
   const [chapterDoc, indexDoc, results] = await Promise.all([
     adminDb.collection('chapters').doc(chapterKey).get(),
     adminDb.collection('chapterStructureIndex').doc(chapterKey).get(),
@@ -29,6 +28,8 @@ export async function planRetrieval(request: ChatRequest, intent: ChatIntent): P
       score: Math.max(0, Math.min(calcScore, 1.0))
     };
   });
+
+  console.log(`[retrievalPlanner] Search returned ${textChunks.length} chunks for ${chapterKey}`);
 
   if ((results as any).isCacheHit) {
      (textChunks as any).isCacheHit = true;

@@ -55,12 +55,12 @@ export function OutOfScopeCard({ message, onForceGeneral, onSuggestionSelect }: 
       {relatedQuestions.length > 0 && (
          <div className="mt-2">
             <h4 className="text-sm font-semibold tracking-wide text-gray-500 uppercase mb-2">Related questions from this chapter:</h4>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2">
                {relatedQuestions.map((q, idx) => (
                   <button 
                      key={idx}
                      onClick={() => onSuggestionSelect && onSuggestionSelect(q)}
-                     className="text-left px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-[13px] font-medium transition-colors border border-gray-200"
+                     className="text-left px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm transition-colors border border-gray-100 border-transparent hover:border-gray-200"
                   >
                      {q}
                   </button>

@@ -1,4 +1,6 @@
-import { z } from 'zod';
-export const pyqRequestSchema = {};
-export const ExamEnum = z.enum(['NEET', 'JEE']);
-export type ExamEnum = z.infer<typeof ExamEnum>;
+export enum ExamEnum {
+  JEE_MAINS = 'JEE MAINS',
+  JEE_ADVANCED = 'JEE ADVANCED',
+  NEET = 'NEET',
+  CBSE = 'CBSE',
+}

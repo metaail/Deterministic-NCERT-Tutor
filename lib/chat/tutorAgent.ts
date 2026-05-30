@@ -44,8 +44,7 @@ export async function runTutorAgent(request: ChatRequest, payload: ContextPayloa
     }
     
     // Await PYQ step
-    const pyqResult = await pyqPromise;
-    const pyqs = pyqResult.pyqs;
+    const pyqs = await pyqPromise;
 
     // Verify NCERT response (allow fetched PYQs so it doesn't get blocked if it references them)
     const verification = verifyResponse(rawResponse, pyqs);

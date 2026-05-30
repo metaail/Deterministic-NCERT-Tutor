@@ -1,1 +1,3 @@
-export async function executeHybridSearch(query?: string, subjectCode?: string, classLevel?: string, chapterKey?: string) { return []; }
+export async function hybridSearch(query: string, options: any) {
+  return [];
+}

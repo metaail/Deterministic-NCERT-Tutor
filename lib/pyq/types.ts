@@ -1,1 +1,1 @@
-export interface PyqIngestionContext {}
+export type PyqIngestionContext = any;
